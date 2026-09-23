@@ -2,242 +2,164 @@
   "version": 21,
   "variables": [
     {
-      "key": "InstanceSmartscapeId",
-      "visible": true,
+      "version": 3,
+      "key": "SmartscapeId",
+      "name": "SmartscapeId",
       "type": "query",
-      "version": 2,
+      "visible": true,
       "editable": true,
-      "input": "smartscapeNodes \"AWS_RDS_*\"\n| filter type == \"AWS_RDS_DBINSTANCE\"\n| filter in(aws.account.id, array($AccountId))\n| filter in(aws.region, array($Region))\n| fieldsKeep id",
+      "input": "smartscapeNodes \"AWS_EC2_INSTANCE\"\n| filter in(aws.account.id, array($AccountId))\n| filter in(aws.region, array($Region))\n| fieldsKeep id",
       "multiple": true,
       "defaultValue": [
         "3420b2ac-f1cf-4b24-b62d-61ba1ba8ed05*"
       ]
     },
     {
-      "key": "AuroraClusterSmartscapeId",
-      "visible": true,
+      "version": 3,
+      "key": "AccountId",
+      "name": "AccountId",
       "type": "query",
-      "version": 2,
+      "visible": true,
       "editable": true,
-      "input": "smartscapeNodes \"AWS_RDS_*\"\n| filter type == \"AWS_RDS_DBCLUSTER\"\n| filter in(aws.account.id, array($AccountId))\n| filter in(aws.region, array($Region))\n| fieldsKeep id",
+      "input": "smartscapeNodes \"AWS_EC2_INSTANCE\"\n| fields aws.account.id\n| dedup aws.account.id\n| sort aws.account.id",
+      "multiple": true,
+      "defaultValue": [
+        "3420b2ac-f1cf-4b24-b62d-61ba1ba8ed05*"
+      ]
+    },
+    {
+      "version": 3,
+      "key": "Region",
+      "name": "Region",
+      "type": "query",
+      "visible": true,
+      "editable": true,
+      "input": "smartscapeNodes \"AWS_EC2_INSTANCE\"\n| fields aws.region\n| dedup aws.region\n| sort aws.region",
+      "multiple": true,
+      "defaultValue": [
+        "3420b2ac-f1cf-4b24-b62d-61ba1ba8ed05*"
+      ]
+    },
+    {
+      "version": 3,
+      "key": "VolumeId",
+      "name": "VolumeId",
+      "type": "query",
+      "visible": false,
+      "editable": true,
+      "input": "smartscapeEdges \"*\"\n| fieldsAdd source = toString(source_id), target = toString(target_id)\n| filter startsWith(source, \"AWS_EC2_VOLUME-\")\n| filter in(toString(target), array($SmartscapeId))\n| fieldsKeep source",
+      "multiple": true,
+      "defaultValue": [
+        "3420b2ac-f1cf-4b24-b62d-61ba1ba8ed05*"
+      ]
+    },
+    {
+      "version": 3,
+      "key": "AutoscalingGroup",
+      "name": "AutoscalingGroup",
+      "type": "query",
+      "visible": false,
+      "editable": true,
+      "input": "smartscapeEdges \"*\"\n| fieldsAdd source = toString(source_id), target = toString(target_id)\n| filter startsWith(source, \"AWS_AUTOSCALING_\") OR startsWith(target, \"AWS_AUTOSCALING_\")\n| filter in(toString(target), array($SmartscapeId))\n| fieldsKeep source ",
       "multiple": true
     },
     {
-      "version": 2,
-      "key": "AccountId",
-      "type": "query",
-      "visible": true,
-      "editable": true,
-      "input": "smartscapeNodes \"AWS_RDS_DBINSTANCE\"\n| fields aws.account.id\n| dedup aws.account.id\n| sort aws.account.id",
-      "multiple": true,
-      "defaultValue": [
-        "3420b2ac-f1cf-4b24-b62d-61ba1ba8ed05*"
-      ]
-    },
-    {
-      "version": 2,
-      "key": "Region",
-      "type": "query",
-      "visible": true,
-      "editable": true,
-      "input": "smartscapeNodes \"AWS_RDS*\"\n| fields aws.region\n| dedup aws.region\n| sort aws.region",
-      "multiple": true,
-      "defaultValue": [
-        "3420b2ac-f1cf-4b24-b62d-61ba1ba8ed05*"
-      ]
-    },
-    {
+      "version": 3,
       "key": "PrimaryTag",
-      "visible": true,
+      "name": "PrimaryTag",
       "type": "query",
-      "version": 2,
+      "visible": true,
       "editable": true,
       "input": "data record(name=\"ANY\")\n| append [\n    fieldsSnapshot metrics\n    | filter startsWith(field, \"primary_tags.\")\n    | fieldsRename name = field\n    | fields name\n]\n| dedup name",
       "multiple": false,
       "defaultValue": "ANY"
     },
     {
+      "version": 3,
       "key": "PrimaryTagValues",
-      "visible": true,
+      "name": "PrimaryTagValues",
       "type": "query",
-      "version": 2,
+      "visible": true,
       "editable": true,
-      "input": "smartscapeNodes \"AWS_RDS_DBINSTANCE\"\n| filter isNotNull($PrimaryTag:noquote)\n| dedup $PrimaryTag:noquote\n| fields $PrimaryTag:noquote\n| sort $PrimaryTag:noquote",
+      "input": "smartscapeNodes \"AWS_EC2_INSTANCE\"\n| filter isNotNull($PrimaryTag:noquote)\n| dedup $PrimaryTag:noquote\n| fields $PrimaryTag:noquote\n| sort $PrimaryTag:noquote",
       "multiple": true,
       "defaultValue": [
         "3420b2ac-f1cf-4b24-b62d-61ba1ba8ed05*"
       ]
     },
     {
-      "version": 2,
+      "version": 3,
       "key": "Limit",
+      "name": "Limit",
       "type": "text",
       "visible": true,
       "editable": true,
-      "defaultValue": "10"
+      "defaultValue": "20"
     }
   ],
   "tiles": {
-    "12": {
-      "title": "Swap usage",
+    "4": {
+      "title": "CPU utilization",
       "description": "",
       "type": "data",
-      "query": "timeseries x = avg(cloud.aws.rds.SwapUsage.By.DBInstanceIdentifier),\n            by: {DBInstanceIdentifier, aws.account.id, aws.region, dt.smartscape_source.id},\n            filter:{in(aws.account.id, array($AccountId)) AND\n                    in(aws.region, array($Region)) AND\n                    (matchesValue($PrimaryTag,\"ANY\") or arraySize(array($PrimaryTagValues)) == 0 or in($PrimaryTag:noquote, arrayConcat(array($PrimaryTagValues), array(\"\")))) AND in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($InstanceSmartscapeId)[])))}\n| sort arrayAvg(x) desc\n| limit toLong($Limit)",
+      "query": "timeseries avg = avg(cloud.aws.ec2.CPUUtilization.By.InstanceId),\n            by: {InstanceId, aws.account.id, aws.region, dt.smartscape_source.id},\n            filter:{in(aws.account.id, array($AccountId)) AND\n                    in(aws.region, array($Region)) AND\n                    (matchesValue($PrimaryTag,\"ANY\") or arraySize(array($PrimaryTagValues)) == 0 or in($PrimaryTag:noquote, arrayConcat(array($PrimaryTagValues), array(\"\")))) AND in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($SmartscapeId)[])))}\n| sort arrayAvg(avg) desc\n| limit toLong($Limit)",
       "visualization": "lineChart",
       "visualizationSettings": {
         "chartSettings": {
           "truncationMode": "middle",
-          "legend": {
-            "position": "right"
-          },
           "leftYAxisSettings": {
-            "label": "Bytes"
-          },
-          "xAxisLabel": "timeframe",
-          "xAxisScaling": "analyzedTimeframe",
-          "fieldMapping": {
-            "leftAxisValues": [
-              "x"
-            ],
-            "timestamp": "timeframe"
-          }
-        },
-        "dataMapping": {
-          "displayedFields": [
-            "DBInstanceIdentifier"
-          ]
-        },
-        "autoSelectVisualization": true,
-        "unitsOverrides": [
-          {
-            "identifier": "x",
-            "unitCategory": "data",
-            "baseUnit": "byte",
-            "displayUnit": null,
-            "decimals": 0,
-            "suffix": "",
-            "delimiter": false,
-            "added": 1745587474893
-          }
-        ]
-      },
-      "querySettings": {
-        "maxResultRecords": 1000,
-        "defaultScanLimitGbytes": 500,
-        "maxResultMegaBytes": 1,
-        "defaultSamplingRatio": 10,
-        "enableSampling": false
-      },
-      "davis": {
-        "enabled": false,
-        "davisVisualization": {
-          "isAvailable": true
-        }
-      }
-    },
-    "21": {
-      "title": "Network transmit throughput",
-      "description": "",
-      "type": "data",
-      "query": "timeseries x = avg(cloud.aws.rds.NetworkTransmitThroughput.By.DBInstanceIdentifier),\n            by: {DBInstanceIdentifier, aws.account.id, aws.region, dt.smartscape_source.id},\n            filter:{in(aws.account.id, array($AccountId)) AND\n                    in(aws.region, array($Region)) AND\n                    (matchesValue($PrimaryTag,\"ANY\") or arraySize(array($PrimaryTagValues)) == 0 or in($PrimaryTag:noquote, arrayConcat(array($PrimaryTagValues), array(\"\")))) AND in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($InstanceSmartscapeId)[])))}\n| sort arrayAvg(x) desc\n| limit toLong($Limit)",
-      "visualization": "lineChart",
-      "visualizationSettings": {
-        "chartSettings": {
-          "truncationMode": "middle",
-          "legend": {
-            "position": "right"
-          },
-          "leftYAxisSettings": {
-            "label": "Bytes"
+            "label": "Percentage"
           },
           "xAxisLabel": "timeframe",
           "xAxisScaling": "auto",
           "fieldMapping": {
             "leftAxisValues": [
-              "x"
+              "avg"
             ],
             "timestamp": "timeframe"
-          }
+          },
+          "gapPolicy": "gap"
         },
         "dataMapping": {
           "displayedFields": [
-            "DBInstanceIdentifier"
+            "InstanceId"
           ]
+        },
+        "legend": {
+          "ratio": 40
         },
         "autoSelectVisualization": false,
-        "unitsOverrides": [
-          {
-            "identifier": "x",
-            "unitCategory": "data",
-            "baseUnit": "byte",
-            "displayUnit": null,
-            "decimals": 0,
-            "suffix": "",
-            "delimiter": false,
-            "added": 1745586543383
-          }
-        ]
-      },
-      "querySettings": {
-        "maxResultRecords": 1000,
-        "defaultScanLimitGbytes": 500,
-        "maxResultMegaBytes": 1,
-        "defaultSamplingRatio": 10,
-        "enableSampling": false
-      },
-      "davis": {
-        "enabled": false,
-        "davisVisualization": {
-          "isAvailable": true
-        }
-      }
-    },
-    "24": {
-      "type": "markdown",
-      "content": "##### Network"
-    },
-    "25": {
-      "title": "Write latency",
-      "description": "",
-      "type": "data",
-      "query": "timeseries x = avg(cloud.aws.rds.WriteLatency.By.DBInstanceIdentifier),\n            by: {DBInstanceIdentifier, aws.account.id, aws.region, dt.smartscape_source.id},\n            filter:{in(aws.account.id, array($AccountId)) AND\n                    in(aws.region, array($Region)) AND\n                    (matchesValue($PrimaryTag,\"ANY\") or arraySize(array($PrimaryTagValues)) == 0 or in($PrimaryTag:noquote, arrayConcat(array($PrimaryTagValues), array(\"\")))) AND in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($InstanceSmartscapeId)[])))}\n| sort arrayAvg(x) desc\n| limit toLong($Limit)",
-      "visualization": "lineChart",
-      "visualizationSettings": {
-        "chartSettings": {
-          "truncationMode": "middle",
-          "legend": {
-            "position": "right"
-          },
-          "leftYAxisSettings": {
-            "label": "Milliseconds"
-          },
-          "xAxisLabel": "timeframe",
-          "xAxisScaling": "auto",
-          "fieldMapping": {
-            "leftAxisValues": [
-              "x"
-            ],
-            "timestamp": "timeframe"
-          }
-        },
-        "dataMapping": {
-          "displayedFields": [
-            "DBInstanceIdentifier"
+        "unitsOverrides": [],
+        "coloring": {
+          "thresholdRules": [
+            {
+              "color": "var(--dt-colors-charts-apdex-good-default, #1c520a)",
+              "label": "Good",
+              "colorMode": "single-color",
+              "mode": "range",
+              "position": "left",
+              "strokeOnly": false
+            },
+            {
+              "color": "var(--dt-colors-charts-apdex-fair-default, #a9780f)",
+              "label": "High",
+              "colorMode": "single-color",
+              "mode": "range",
+              "position": "left",
+              "strokeOnly": false,
+              "min": 90
+            },
+            {
+              "color": "var(--dt-colors-charts-loglevel-emergency-default, #ae132d)",
+              "label": "Critical",
+              "colorMode": "single-color",
+              "mode": "range",
+              "position": "left",
+              "strokeOnly": false,
+              "min": 95
+            }
           ]
-        },
-        "autoSelectVisualization": true,
-        "unitsOverrides": [
-          {
-            "identifier": "x",
-            "unitCategory": "time",
-            "baseUnit": "millisecond",
-            "displayUnit": null,
-            "decimals": 0,
-            "suffix": "",
-            "delimiter": false,
-            "added": 1745587297078
-          }
-        ]
+        }
       },
       "querySettings": {
         "maxResultRecords": 1000,
@@ -254,104 +176,29 @@
       }
     },
     "27": {
-      "title": "Read latency",
+      "title": "Instances per type",
       "description": "",
       "type": "data",
-      "query": "timeseries x = avg(cloud.aws.rds.ReadLatency.By.DBInstanceIdentifier),\n            by: {DBInstanceIdentifier, aws.account.id, aws.region, dt.smartscape_source.id},\n            filter:{in(aws.account.id, array($AccountId)) AND\n                    in(aws.region, array($Region)) AND\n                    (matchesValue($PrimaryTag,\"ANY\") or arraySize(array($PrimaryTagValues)) == 0 or in($PrimaryTag:noquote, arrayConcat(array($PrimaryTagValues), array(\"\")))) AND in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($InstanceSmartscapeId)[])))}\n| sort arrayAvg(x) desc\n| limit toLong($Limit)",
-      "visualization": "lineChart",
+      "query": "smartscapeNodes \"AWS_EC2_INSTANCE\"\n| filter in(aws.account.id, array($AccountId))\n| filter in(aws.region, array($Region))\n| filter (matchesValue($PrimaryTag,\"ANY\") or arraySize(array($PrimaryTagValues)) == 0 or in($PrimaryTag:noquote, arrayConcat(array($PrimaryTagValues), array(\"\"))))\n| filter in(toString(id), array($SmartscapeId))\n| fieldsAdd aws.object\n| parse aws.object, \"JSON:json\"\n| fields instanceType = json[configuration][instanceType]\n| filter isNotNull(instanceType)\n| summarize  count=count(), by: {instanceType}\n| sort count desc\n| limit toLong($Limit)",
+      "visualization": "categoricalBarChart",
       "visualizationSettings": {
+        "autoSelectVisualization": false,
         "chartSettings": {
           "truncationMode": "middle",
           "legend": {
-            "position": "right"
+            "hidden": true
           },
-          "leftYAxisSettings": {
-            "label": "Milliseconds"
-          },
-          "xAxisLabel": "timeframe",
-          "xAxisScaling": "auto",
-          "fieldMapping": {
-            "leftAxisValues": [
-              "x"
+          "categoricalBarChartSettings": {
+            "categoryAxisLabel": "Instance Type",
+            "categoryAxis": [
+              "instanceType"
             ],
-            "timestamp": "timeframe"
+            "valueAxis": [
+              "count"
+            ],
+            "valueAxisLabel": "Number of instances"
           }
-        },
-        "dataMapping": {
-          "displayedFields": [
-            "DBInstanceIdentifier"
-          ]
-        },
-        "autoSelectVisualization": true,
-        "unitsOverrides": [
-          {
-            "identifier": "x",
-            "unitCategory": "time",
-            "baseUnit": "millisecond",
-            "displayUnit": null,
-            "decimals": 0,
-            "suffix": "",
-            "delimiter": false,
-            "added": 1745587321382
-          }
-        ]
-      },
-      "querySettings": {
-        "maxResultRecords": 1000,
-        "defaultScanLimitGbytes": 500,
-        "maxResultMegaBytes": 1,
-        "defaultSamplingRatio": 10,
-        "enableSampling": false
-      },
-      "davis": {
-        "enabled": false,
-        "davisVisualization": {
-          "isAvailable": true
         }
-      }
-    },
-    "28": {
-      "title": "Free storage space",
-      "description": "",
-      "type": "data",
-      "query": "timeseries x = avg(cloud.aws.rds.FreeStorageSpace.By.DBInstanceIdentifier),\n            by: {DBInstanceIdentifier, aws.account.id, aws.region, dt.smartscape_source.id},\n            filter:{in(aws.account.id, array($AccountId)) AND\n                    in(aws.region, array($Region)) AND\n                    (matchesValue($PrimaryTag,\"ANY\") or arraySize(array($PrimaryTagValues)) == 0 or in($PrimaryTag:noquote, arrayConcat(array($PrimaryTagValues), array(\"\")))) AND in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($InstanceSmartscapeId)[])))}\n| sort arrayAvg(x) desc\n| limit toLong($Limit)",
-      "visualization": "lineChart",
-      "visualizationSettings": {
-        "chartSettings": {
-          "truncationMode": "middle",
-          "legend": {
-            "position": "right"
-          },
-          "leftYAxisSettings": {
-            "label": "Bytes"
-          },
-          "xAxisLabel": "timeframe",
-          "xAxisScaling": "analyzedTimeframe",
-          "fieldMapping": {
-            "leftAxisValues": [
-              "x"
-            ],
-            "timestamp": "timeframe"
-          }
-        },
-        "dataMapping": {
-          "displayedFields": [
-            "DBInstanceIdentifier"
-          ]
-        },
-        "autoSelectVisualization": true,
-        "unitsOverrides": [
-          {
-            "identifier": "x",
-            "unitCategory": "data",
-            "baseUnit": "byte",
-            "displayUnit": null,
-            "decimals": 0,
-            "suffix": "",
-            "delimiter": false,
-            "added": 1745587366136
-          }
-        ]
       },
       "querySettings": {
         "maxResultRecords": 1000,
@@ -368,154 +215,91 @@
       }
     },
     "29": {
-      "title": "Freeable memory",
-      "description": "The amount of available random access memory.",
-      "type": "data",
-      "query": "timeseries x = avg(cloud.aws.rds.FreeableMemory.By.DBInstanceIdentifier),\n            by: {DBInstanceIdentifier, aws.account.id, aws.region, dt.smartscape_source.id},\n            filter:{in(aws.account.id, array($AccountId)) AND\n                    in(aws.region, array($Region)) AND\n                    (matchesValue($PrimaryTag,\"ANY\") or arraySize(array($PrimaryTagValues)) == 0 or in($PrimaryTag:noquote, arrayConcat(array($PrimaryTagValues), array(\"\")))) AND in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($InstanceSmartscapeId)[])))}\n| sort arrayAvg(x) desc\n| limit toLong($Limit)",
-      "visualization": "lineChart",
-      "visualizationSettings": {
-        "chartSettings": {
-          "truncationMode": "middle",
-          "legend": {
-            "position": "right"
-          },
-          "leftYAxisSettings": {
-            "label": "Bytes"
-          },
-          "xAxisLabel": "timeframe",
-          "xAxisScaling": "analyzedTimeframe",
-          "fieldMapping": {
-            "leftAxisValues": [
-              "x"
-            ],
-            "timestamp": "timeframe"
-          }
-        },
-        "dataMapping": {
-          "displayedFields": [
-            "DBInstanceIdentifier"
-          ]
-        },
-        "autoSelectVisualization": true,
-        "unitsOverrides": [
-          {
-            "identifier": "x",
-            "unitCategory": "data",
-            "baseUnit": "byte",
-            "displayUnit": null,
-            "decimals": 0,
-            "suffix": "",
-            "delimiter": false,
-            "added": 1745587451193
-          }
-        ]
-      },
-      "querySettings": {
-        "maxResultRecords": 1000,
-        "defaultScanLimitGbytes": 500,
-        "maxResultMegaBytes": 1,
-        "defaultSamplingRatio": 10,
-        "enableSampling": false
-      },
-      "davis": {
-        "enabled": false,
-        "davisVisualization": {
-          "isAvailable": true
-        }
-      }
-    },
-    "33": {
       "type": "markdown",
-      "content": "### AWS Relational Database Service\n\nTake a deep look into the aspects of your RDS instances. Look for increases in CPU and memory utilization based on the connections to each instance. Visualize network throughput and latencies for a more thorough understanding. \n\nInspect the selected instances in the [Clouds App](/ui/intent/dynatrace.clouds/view_aws_service/#{\"dt.timeframe\":{\"to\":\"$dt_timeframe_to\",\"from\":\"$dt_timeframe_from\"},\"explorer.type\":\"databases\",\"dt.smartscape.aws_rds_dbinstance\":\"$InstanceSmartscapeId\"}).\n\n---"
+      "content": "### AWS EC2\n\nInstantly view the status of your EC2 environment at a glance. Dive into detailed insights for specific instances to monitor and predict anomalies, review state, health, and performance metrics for your EC2 Instances, EBS volumes, and Auto Scaling Groups.\n\nInspect the selected instances in the [Clouds App](/ui/intent/dynatrace.clouds/view_aws_service/#{\"dt.timeframe\":{\"to\":\"$dt_timeframe_to\",\"from\":\"$dt_timeframe_from\"},\"explorer.type\":\"vm\",\"dt.smartscape.aws_ec2_instance\":\"$SmartscapeId\"}).\n\n---"
     },
-    "40": {
-      "type": "markdown",
-      "content": "##### Storage"
-    },
-    "49": {
-      "type": "markdown",
-      "content": "##### Latency"
-    },
-    "50": {
-      "title": "Database instances",
+    "30": {
+      "title": "Instances per region",
       "description": "",
       "type": "data",
-      "query": "smartscapeNodes \"AWS_RDS_DBINSTANCE\"\n| fieldsAdd name\n| fieldsAdd aws.object\n| filter in(aws.account.id, array($AccountId))\n| filter in(aws.region, array($Region))\n| filter (matchesValue($PrimaryTag,\"ANY\") or arraySize(array($PrimaryTagValues)) == 0 or in($PrimaryTag:noquote, arrayConcat(array($PrimaryTagValues), array(\"\"))))\n| filter in(toString(id), array($InstanceSmartscapeId))\n| parse aws.object, \"JSON:json\"\n| fieldsAdd engine = json[configuration][engine]\n| fields name, engine\n| summarize count()",
-      "visualization": "singleValue",
-      "visualizationSettings": {
-        "singleValue": {
-          "labelMode": "none",
-          "label": "count()",
-          "recordField": "count()",
-          "colorThresholdTarget": "background",
-          "trend": {
-            "isVisible": true,
-            "isRelative": false
-          }
-        },
-        "autoSelectVisualization": false,
-        "coloring": {
-          "colorRules": [
-            {
-              "colorMode": "custom-color",
-              "comparator": "≥",
-              "field": "count()",
-              "value": 1,
-              "type": "long",
-              "customColor": "#5EB1A9"
-            }
-          ]
-        }
-      },
-      "querySettings": {
-        "maxResultRecords": 1000,
-        "defaultScanLimitGbytes": 500,
-        "maxResultMegaBytes": 1,
-        "defaultSamplingRatio": 10,
-        "enableSampling": false
-      },
-      "davis": {
-        "enabled": false,
-        "davisVisualization": {
-          "isAvailable": true
-        }
-      }
-    },
-    "51": {
-      "title": "Database instances by class",
-      "type": "data",
-      "query": "smartscapeNodes \"AWS_RDS_DBINSTANCE\"\n| fieldsAdd aws.resource.name\n| fieldsAdd aws.object\n| filter in(aws.account.id, array($AccountId))\n| filter in(aws.region, array($Region))\n| filter (matchesValue($PrimaryTag,\"ANY\") or arraySize(array($PrimaryTagValues)) == 0 or in($PrimaryTag:noquote, arrayConcat(array($PrimaryTagValues), array(\"\"))))\n| filter in(toString(id), array($InstanceSmartscapeId))\n| parse aws.object, \"JSON:json\"\n| fieldsAdd class = json[configuration][dbInstanceClass]\n| fields class\n| summarize count = count(), by: {class}\n| sort count desc\n| limit toLong($Limit)",
+      "query": "smartscapeNodes \"AWS_EC2_INSTANCE\"\n| filter in(aws.account.id, array($AccountId))\n| filter in(aws.region, array($Region))\n| filter (matchesValue($PrimaryTag,\"ANY\") or arraySize(array($PrimaryTagValues)) == 0 or in($PrimaryTag:noquote, arrayConcat(array($PrimaryTagValues), array(\"\"))))\n| filter in(toString(id), array($SmartscapeId))\n| summarize count=count(), by: {aws.region}\n| sort count desc\n| limit toLong($Limit)",
       "visualization": "categoricalBarChart",
       "visualizationSettings": {
+        "autoSelectVisualization": false,
         "chartSettings": {
           "truncationMode": "middle",
           "legend": {
             "hidden": true
           },
           "categoricalBarChartSettings": {
-            "categoryAxisLabel": "Class",
+            "categoryAxisLabel": "Region",
             "categoryAxis": [
-              "class"
+              "aws.region"
             ],
             "valueAxis": [
               "count"
             ],
             "valueAxisLabel": "Number of instances"
           }
+        }
+      },
+      "querySettings": {
+        "maxResultRecords": 1000,
+        "defaultScanLimitGbytes": 500,
+        "maxResultMegaBytes": 1,
+        "defaultSamplingRatio": 10,
+        "enableSampling": false
+      },
+      "davis": {
+        "enabled": false,
+        "davisVisualization": {
+          "isAvailable": true
+        }
+      }
+    },
+    "31": {
+      "title": "Active EC2 instances",
+      "description": "",
+      "type": "data",
+      "query": "smartscapeNodes \"AWS_EC2_INSTANCE\"\n| filter in(aws.account.id, array($AccountId))\n| filter in(aws.region, array($Region))\n| filter (matchesValue($PrimaryTag,\"ANY\") or arraySize(array($PrimaryTagValues)) == 0 or in($PrimaryTag:noquote, arrayConcat(array($PrimaryTagValues), array(\"\"))))\n| filter in(toString(id), array($SmartscapeId))\n| summarize count=countDistinct(id)",
+      "visualization": "singleValue",
+      "visualizationSettings": {
+        "autoSelectVisualization": false,
+        "singleValue": {
+          "labelMode": "none",
+          "label": "Active EC2 instances (ver.)",
+          "recordField": "count",
+          "prefixIcon": "DesktopIcon",
+          "trend": {
+            "isVisible": true
+          },
+          "isIconVisible": true
         },
         "coloring": {
           "colorRules": [
             {
-              "field": "DT.name",
-              "comparator": "= *value*",
-              "value": "",
-              "type": "string",
-              "colorMode": "color-palette",
-              "colorPalette": "categorical"
+              "colorMode": "single-color",
+              "comparator": "≥",
+              "field": "count",
+              "value": 1,
+              "type": "double",
+              "color": "var(--dt-colors-charts-loglevel-info-default, #134fc9)"
             }
           ]
         },
-        "autoSelectVisualization": false
+        "unitsOverrides": [
+          {
+            "identifier": "count",
+            "unitCategory": "unspecified",
+            "baseUnit": "none",
+            "displayUnit": null,
+            "decimals": 0,
+            "suffix": "",
+            "delimiter": false,
+            "cascade": null,
+            "added": 1737039581091
+          }
+        ]
       },
       "querySettings": {
         "maxResultRecords": 1000,
@@ -532,183 +316,84 @@
       }
     },
     "52": {
-      "title": "Database instances by engine",
+      "title": "Total network input",
+      "description": "The total number of bytes received by the instance on all network interfaces.",
       "type": "data",
-      "query": "smartscapeNodes \"AWS_RDS_DBINSTANCE\"\n| fieldsAdd name\n| fieldsAdd aws.object\n| filter in(aws.account.id, array($AccountId))\n| filter in(aws.region, array($Region))\n| filter (matchesValue($PrimaryTag,\"ANY\") or arraySize(array($PrimaryTagValues)) == 0 or in($PrimaryTag:noquote, arrayConcat(array($PrimaryTagValues), array(\"\"))))\n| filter in(toString(id), array($InstanceSmartscapeId))\n| parse aws.object, \"JSON:json\"\n| fieldsAdd engine = json[configuration][engine]\n| fields name, engine\n| summarize  count=count(), by: {engine}\n| sort count desc\n| limit toLong($Limit)",
-      "visualization": "categoricalBarChart",
+      "query": "timeseries  NetworkInput = sum(cloud.aws.ec2.NetworkIn.By.InstanceId),\n            filter:{in(aws.account.id, array($AccountId)) AND\n                    in(aws.region, array($Region)) AND\n                    (matchesValue($PrimaryTag,\"ANY\") or arraySize(array($PrimaryTagValues)) == 0 or in($PrimaryTag:noquote, arrayConcat(array($PrimaryTagValues), array(\"\")))) AND in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($SmartscapeId)[])))}\n| fieldsAdd groupSum = arraySum(NetworkInput)\n| summarize x = sum(groupSum)",
+      "visualization": "singleValue",
       "visualizationSettings": {
-        "chartSettings": {
-          "truncationMode": "middle",
-          "legend": {
-            "hidden": true
+        "singleValue": {
+          "labelMode": "none",
+          "label": "error",
+          "recordField": "x",
+          "prefixIcon": "",
+          "sparklineSettings": {
+            "record": "NetworkInput"
           },
-          "categoricalBarChartSettings": {
-            "categoryAxisLabel": "Engine",
-            "categoryAxis": [
-              "engine"
-            ],
-            "valueAxis": [
-              "count"
-            ],
-            "valueAxisLabel": "Number of instances"
+          "trend": {
+            "isVisible": false
           }
-        },
-        "coloring": {
-          "colorRules": [
-            {
-              "field": "DT.name",
-              "comparator": "= *value*",
-              "value": "",
-              "type": "string",
-              "colorMode": "color-palette",
-              "colorPalette": "categorical"
-            }
-          ]
-        },
-        "autoSelectVisualization": false
-      },
-      "querySettings": {
-        "maxResultRecords": 1000,
-        "defaultScanLimitGbytes": 500,
-        "maxResultMegaBytes": 1,
-        "defaultSamplingRatio": 10,
-        "enableSampling": false
-      },
-      "davis": {
-        "enabled": false,
-        "davisVisualization": {
-          "isAvailable": true
-        }
-      }
-    },
-    "54": {
-      "title": "CPU utilization",
-      "type": "data",
-      "query": "timeseries cpuUtilization = avg(cloud.aws.rds.CPUUtilization.By.DBInstanceIdentifier),\n            by:{DBInstanceIdentifier, aws.account.id, aws.region, dt.smartscape_source.id},\n            filter:{in(aws.account.id, array($AccountId)) AND\n                    in(aws.region, array($Region)) AND\n                    (matchesValue($PrimaryTag,\"ANY\") or arraySize(array($PrimaryTagValues)) == 0 or in($PrimaryTag:noquote, arrayConcat(array($PrimaryTagValues), array(\"\")))) AND in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($InstanceSmartscapeId)[])))}\n| sort arrayAvg(cpuUtilization) desc\n| limit toLong($Limit)",
-      "visualization": "lineChart",
-      "visualizationSettings": {
-        "chartSettings": {
-          "truncationMode": "middle",
-          "xAxisLabel": "timeframe",
-          "xAxisScaling": "analyzedTimeframe",
-          "fieldMapping": {
-            "leftAxisValues": [
-              "cpuUtilization"
-            ],
-            "timestamp": "timeframe"
-          }
-        },
-        "dataMapping": {
-          "displayedFields": [
-            "DBInstanceIdentifier"
-          ]
         },
         "autoSelectVisualization": false,
-        "unitsOverrides": [
-          {
-            "identifier": "cpuUtilization",
-            "unitCategory": "percentage",
-            "baseUnit": "percent",
-            "displayUnit": null,
-            "decimals": 0,
-            "suffix": "",
-            "delimiter": false,
-            "added": 1745587053910
-          }
-        ]
-      },
-      "querySettings": {
-        "maxResultRecords": 1000,
-        "defaultScanLimitGbytes": 500,
-        "maxResultMegaBytes": 1,
-        "defaultSamplingRatio": 10,
-        "enableSampling": false
-      },
-      "davis": {
-        "enabled": false,
-        "davisVisualization": {
-          "isAvailable": true
-        }
-      }
-    },
-    "55": {
-      "title": "Database connections",
-      "type": "data",
-      "query": "timeseries x = max(cloud.aws.rds.DatabaseConnections.By.DBInstanceIdentifier),\n            by: {DBInstanceIdentifier, aws.account.id, aws.region, dt.smartscape_source.id},\n            filter:{in(aws.account.id, array($AccountId)) AND\n                    in(aws.region, array($Region)) AND\n                    (matchesValue($PrimaryTag,\"ANY\") or arraySize(array($PrimaryTagValues)) == 0 or in($PrimaryTag:noquote, arrayConcat(array($PrimaryTagValues), array(\"\")))) AND in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($InstanceSmartscapeId)[])))}\n| sort arrayMax(x) desc\n| limit toLong($Limit)",
-      "visualization": "lineChart",
-      "visualizationSettings": {
-        "chartSettings": {
-          "truncationMode": "middle",
-          "leftYAxisSettings": {
-            "label": "Number of connections",
-            "isLabelVisible": true
-          },
-          "xAxisLabel": "timeframe",
-          "xAxisScaling": "analyzedTimeframe",
-          "fieldMapping": {
-            "leftAxisValues": [
-              "x"
-            ],
-            "timestamp": "timeframe"
-          }
-        },
-        "dataMapping": {
-          "displayedFields": [
-            "DBInstanceIdentifier"
-          ]
-        },
-        "autoSelectVisualization": false
-      },
-      "querySettings": {
-        "maxResultRecords": 1000,
-        "defaultScanLimitGbytes": 500,
-        "maxResultMegaBytes": 1,
-        "defaultSamplingRatio": 10,
-        "enableSampling": false
-      },
-      "davis": {
-        "enabled": false,
-        "davisVisualization": {
-          "isAvailable": true
-        }
-      }
-    },
-    "56": {
-      "title": "Network receive throughput",
-      "type": "data",
-      "query": "timeseries x = avg(cloud.aws.rds.NetworkReceiveThroughput.By.DBInstanceIdentifier),\n            by: {DBInstanceIdentifier, aws.account.id, aws.region, dt.smartscape_source.id},\n            filter:{in(aws.account.id, array($AccountId)) AND\n                    in(aws.region, array($Region)) AND\n                    (matchesValue($PrimaryTag,\"ANY\") or arraySize(array($PrimaryTagValues)) == 0 or in($PrimaryTag:noquote, arrayConcat(array($PrimaryTagValues), array(\"\")))) AND in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($InstanceSmartscapeId)[])))}\n| sort arrayAvg(x) desc\n| limit toLong($Limit)",
-      "visualization": "lineChart",
-      "visualizationSettings": {
-        "chartSettings": {
-          "truncationMode": "middle",
-          "leftYAxisSettings": {
-            "label": "Bytes"
-          },
-          "xAxisLabel": "timeframe",
-          "xAxisScaling": "analyzedTimeframe",
-          "fieldMapping": {
-            "leftAxisValues": [
-              "x"
-            ],
-            "timestamp": "timeframe"
-          }
-        },
-        "dataMapping": {
-          "displayedFields": [
-            "DBInstanceIdentifier"
-          ]
-        },
-        "autoSelectVisualization": true,
         "unitsOverrides": [
           {
             "identifier": "x",
             "unitCategory": "data",
             "baseUnit": "byte",
             "displayUnit": null,
-            "decimals": 0,
+            "decimals": 2,
             "suffix": "",
             "delimiter": false,
-            "added": 1745586580479
+            "cascade": null,
+            "added": 1737044561114
+          }
+        ]
+      },
+      "querySettings": {
+        "defaultSamplingRatio": 10,
+        "defaultScanLimitGbytes": 500,
+        "enableSampling": false,
+        "maxResultMegaBytes": 1,
+        "maxResultRecords": 1000
+      },
+      "davis": {
+        "enabled": false,
+        "davisVisualization": {
+          "isAvailable": true
+        }
+      }
+    },
+    "53": {
+      "title": "Total network output",
+      "description": "The total number of bytes sent out by the instance on all network interfaces.",
+      "type": "data",
+      "query": "timeseries  NetworkOut = sum(cloud.aws.ec2.NetworkOut.By.InstanceId),\n            filter:{in(aws.account.id, array($AccountId)) AND\n                    in(aws.region, array($Region)) AND\n                    (matchesValue($PrimaryTag,\"ANY\") or arraySize(array($PrimaryTagValues)) == 0 or in($PrimaryTag:noquote, arrayConcat(array($PrimaryTagValues), array(\"\")))) AND in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($SmartscapeId)[])))}\n| fieldsAdd groupSum = arraySum(NetworkOut)\n| summarize x = sum(groupSum)",
+      "visualization": "singleValue",
+      "visualizationSettings": {
+        "autoSelectVisualization": false,
+        "singleValue": {
+          "labelMode": "none",
+          "label": "error",
+          "recordField": "x",
+          "prefixIcon": "",
+          "sparklineSettings": {
+            "record": "NetworkOut"
+          },
+          "trend": {
+            "isVisible": false
+          }
+        },
+        "unitsOverrides": [
+          {
+            "identifier": "x",
+            "unitCategory": "data",
+            "baseUnit": "byte",
+            "displayUnit": null,
+            "decimals": 2,
+            "suffix": "",
+            "delimiter": false,
+            "cascade": null,
+            "added": 1737044658043
           }
         ]
       },
@@ -727,38 +412,40 @@
       }
     },
     "57": {
-      "title": "Average read latency",
+      "title": "Network input",
       "description": "",
       "type": "data",
-      "query": "timeseries x = avg(cloud.aws.rds.ReadLatency.By.DBInstanceIdentifier),\n            filter:{in(aws.account.id, array($AccountId)) AND\n                    in(aws.region, array($Region)) AND\n                    (matchesValue($PrimaryTag,\"ANY\") or arraySize(array($PrimaryTagValues)) == 0 or in($PrimaryTag:noquote, arrayConcat(array($PrimaryTagValues), array(\"\")))) AND in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($InstanceSmartscapeId)[])))}\n| fieldsAdd avgLat = arrayAvg(x)",
-      "visualization": "singleValue",
+      "query": "timeseries in = sum(cloud.aws.ec2.NetworkIn.By.InstanceId),\n            by: {InstanceId, aws.account.id, aws.region, dt.smartscape_source.id},\n            filter:{in(aws.account.id, array($AccountId)) AND\n                    in(aws.region, array($Region)) AND\n                    (matchesValue($PrimaryTag,\"ANY\") or arraySize(array($PrimaryTagValues)) == 0 or in($PrimaryTag:noquote, arrayConcat(array($PrimaryTagValues), array(\"\")))) AND in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($SmartscapeId)[])))}\n| sort arraySum(in) desc\n| limit toLong($Limit)",
+      "visualization": "lineChart",
       "visualizationSettings": {
-        "singleValue": {
-          "labelMode": "none",
-          "label": "dbinstanceidentifier",
-          "recordField": "avgLat",
-          "prefixIcon": "",
-          "sparklineSettings": {
-            "isVisible": false,
-            "record": "x"
+        "chartSettings": {
+          "truncationMode": "middle",
+          "legend": {
+            "position": "right"
           },
-          "trend": {
-            "isVisible": false
-          }
+          "leftYAxisSettings": {
+            "label": "Bytes"
+          },
+          "xAxisLabel": "timeframe",
+          "xAxisScaling": "auto",
+          "fieldMapping": {
+            "leftAxisValues": [
+              "in"
+            ],
+            "timestamp": "timeframe"
+          },
+          "gapPolicy": "gap"
+        },
+        "dataMapping": {
+          "displayedFields": [
+            "InstanceId"
+          ]
+        },
+        "legend": {
+          "ratio": 23
         },
         "autoSelectVisualization": false,
-        "unitsOverrides": [
-          {
-            "identifier": "avgLat",
-            "unitCategory": "time",
-            "baseUnit": "millisecond",
-            "displayUnit": null,
-            "decimals": 2,
-            "suffix": "",
-            "delimiter": false,
-            "added": 1745587321382
-          }
-        ]
+        "unitsOverrides": []
       },
       "querySettings": {
         "maxResultRecords": 1000,
@@ -775,191 +462,34 @@
       }
     },
     "58": {
-      "title": "Average write latency",
+      "title": "Network output",
       "description": "",
       "type": "data",
-      "query": "timeseries x = avg(cloud.aws.rds.WriteLatency.By.DBInstanceIdentifier),\n            filter:{in(aws.account.id, array($AccountId)) AND\n                    in(aws.region, array($Region)) AND\n                    (matchesValue($PrimaryTag,\"ANY\") or arraySize(array($PrimaryTagValues)) == 0 or in($PrimaryTag:noquote, arrayConcat(array($PrimaryTagValues), array(\"\")))) AND in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($InstanceSmartscapeId)[])))}\n| fieldsAdd avgLat = arrayAvg(x)",
-      "visualization": "singleValue",
-      "visualizationSettings": {
-        "singleValue": {
-          "labelMode": "none",
-          "label": "dbinstanceidentifier",
-          "recordField": "avgLat",
-          "prefixIcon": "",
-          "sparklineSettings": {
-            "isVisible": false,
-            "record": "x"
-          },
-          "trend": {
-            "isVisible": false
-          }
-        },
-        "autoSelectVisualization": false,
-        "unitsOverrides": [
-          {
-            "identifier": "avgLat",
-            "unitCategory": "time",
-            "baseUnit": "millisecond",
-            "displayUnit": null,
-            "decimals": 2,
-            "suffix": "",
-            "delimiter": false,
-            "added": 1745587321382
-          }
-        ]
-      },
-      "querySettings": {
-        "maxResultRecords": 1000,
-        "defaultScanLimitGbytes": 500,
-        "maxResultMegaBytes": 1,
-        "defaultSamplingRatio": 10,
-        "enableSampling": false
-      },
-      "davis": {
-        "enabled": false,
-        "davisVisualization": {
-          "isAvailable": true
-        }
-      }
-    },
-    "59": {
-      "title": "Average network receive throughput",
-      "type": "data",
-      "query": "timeseries x = avg(cloud.aws.rds.NetworkReceiveThroughput.By.DBInstanceIdentifier),\n            filter:{in(aws.account.id, array($AccountId)) AND\n                    in(aws.region, array($Region)) AND\n                    (matchesValue($PrimaryTag,\"ANY\") or arraySize(array($PrimaryTagValues)) == 0 or in($PrimaryTag:noquote, arrayConcat(array($PrimaryTagValues), array(\"\")))) AND in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($InstanceSmartscapeId)[])))}\n| fieldsAdd AvgThr = arrayAvg(x)",
-      "visualization": "singleValue",
-      "visualizationSettings": {
-        "singleValue": {
-          "labelMode": "none",
-          "label": "AvgThr",
-          "recordField": "AvgThr",
-          "sparklineSettings": {
-            "isVisible": false,
-            "record": "x"
-          },
-          "trend": {
-            "isVisible": false
-          }
-        },
-        "autoSelectVisualization": false,
-        "unitsOverrides": [
-          {
-            "identifier": "AvgThr",
-            "unitCategory": "data",
-            "baseUnit": "byte",
-            "displayUnit": null,
-            "decimals": 2,
-            "suffix": "",
-            "delimiter": false,
-            "added": 1745586580479
-          }
-        ]
-      },
-      "querySettings": {
-        "maxResultRecords": 1000,
-        "defaultScanLimitGbytes": 500,
-        "maxResultMegaBytes": 1,
-        "defaultSamplingRatio": 10,
-        "enableSampling": false
-      },
-      "davis": {
-        "enabled": false,
-        "davisVisualization": {
-          "isAvailable": true
-        }
-      }
-    },
-    "60": {
-      "title": "Average network transmit throughput",
-      "type": "data",
-      "query": "timeseries x = avg(cloud.aws.rds.NetworkTransmitThroughput.By.DBInstanceIdentifier),\n            filter:{in(aws.account.id, array($AccountId)) AND\n                    in(aws.region, array($Region)) AND\n                    (matchesValue($PrimaryTag,\"ANY\") or arraySize(array($PrimaryTagValues)) == 0 or in($PrimaryTag:noquote, arrayConcat(array($PrimaryTagValues), array(\"\")))) AND in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($InstanceSmartscapeId)[])))}\n| fieldsAdd AvgThr = arrayAvg(x)",
-      "visualization": "singleValue",
-      "visualizationSettings": {
-        "singleValue": {
-          "labelMode": "none",
-          "label": "AvgThr",
-          "recordField": "AvgThr",
-          "sparklineSettings": {
-            "isVisible": false,
-            "record": "x"
-          },
-          "trend": {
-            "isVisible": false
-          }
-        },
-        "autoSelectVisualization": false,
-        "unitsOverrides": [
-          {
-            "identifier": "AvgThr",
-            "unitCategory": "data",
-            "baseUnit": "byte",
-            "displayUnit": null,
-            "decimals": 2,
-            "suffix": "",
-            "delimiter": false,
-            "added": 1745586580479
-          }
-        ]
-      },
-      "querySettings": {
-        "maxResultRecords": 1000,
-        "defaultScanLimitGbytes": 500,
-        "maxResultMegaBytes": 1,
-        "defaultSamplingRatio": 10,
-        "enableSampling": false
-      },
-      "davis": {
-        "enabled": false,
-        "davisVisualization": {
-          "isAvailable": true
-        }
-      }
-    },
-    "62": {
-      "type": "markdown",
-      "content": "### AWS Aurora\nCluster-level metrics. Track the used volume and detect peaks in read and write IO operations to identify anomalies in the cluster or specific DB instances.\n\n---"
-    },
-    "65": {
-      "title": "Volume bytes used",
-      "description": "",
-      "type": "data",
-      "query": "timeseries x = avg(cloud.aws.rds.VolumeBytesUsed.By.DBClusterIdentifier),\n            by: {DBClusterIdentifier, aws.account.id, aws.region, dt.smartscape_source.id},\n            filter:{in(aws.account.id, array($AccountId)) AND\n                    in(aws.region, array($Region)) AND\n                    (matchesValue($PrimaryTag,\"ANY\") or arraySize(array($PrimaryTagValues)) == 0 or in($PrimaryTag:noquote, arrayConcat(array($PrimaryTagValues), array(\"\")))) AND in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($AuroraClusterSmartscapeId)[])))}\n| sort arrayAvg(x) desc\n| limit toLong($Limit)",
+      "query": "timeseries out = sum(cloud.aws.ec2.NetworkOut.By.InstanceId),\n            by: {InstanceId, aws.account.id, aws.region, dt.smartscape_source.id},\n            filter:{in(aws.account.id, array($AccountId)) AND\n                    in(aws.region, array($Region)) AND\n                    (matchesValue($PrimaryTag,\"ANY\") or arraySize(array($PrimaryTagValues)) == 0 or in($PrimaryTag:noquote, arrayConcat(array($PrimaryTagValues), array(\"\")))) AND in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($SmartscapeId)[])))}\n| sort arraySum(out) desc\n| limit toLong($Limit)",
       "visualization": "lineChart",
       "visualizationSettings": {
         "chartSettings": {
           "truncationMode": "middle",
-          "legend": {
-            "position": "right"
-          },
           "leftYAxisSettings": {
             "label": "Bytes"
           },
           "xAxisLabel": "timeframe",
-          "xAxisScaling": "analyzedTimeframe",
+          "xAxisScaling": "auto",
           "fieldMapping": {
             "leftAxisValues": [
-              "x"
+              "out"
             ],
             "timestamp": "timeframe"
-          }
+          },
+          "gapPolicy": "gap"
         },
         "dataMapping": {
           "displayedFields": [
-            "DBClusterIdentifier"
+            "InstanceId"
           ]
         },
         "autoSelectVisualization": false,
-        "unitsOverrides": [
-          {
-            "identifier": "x",
-            "unitCategory": "data",
-            "baseUnit": "byte",
-            "displayUnit": null,
-            "decimals": 0,
-            "suffix": "",
-            "delimiter": false,
-            "added": 1745587366136
-          }
-        ]
+        "unitsOverrides": []
       },
       "querySettings": {
         "maxResultRecords": 1000,
@@ -976,58 +506,47 @@
       }
     },
     "66": {
-      "title": "Read IO operations",
-      "description": "The number of billed read I/O operations from a cluster volume within a 5-minute interval.",
+      "title": "Read bytes",
+      "description": "",
       "type": "data",
-      "query": "timeseries x = avg(cloud.aws.rds.VolumeReadIOPs.By.DBClusterIdentifier),\n            by: {DBClusterIdentifier, aws.account.id, aws.region, dt.smartscape_source.id},\n            filter:{in(aws.account.id, array($AccountId)) AND\n                    in(aws.region, array($Region)) AND\n                    (matchesValue($PrimaryTag,\"ANY\") or arraySize(array($PrimaryTagValues)) == 0 or in($PrimaryTag:noquote, arrayConcat(array($PrimaryTagValues), array(\"\")))) AND in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($AuroraClusterSmartscapeId)[])))}\n| sort arrayAvg(x) desc\n| limit toLong($Limit)",
+      "query": "timeseries x = sum(cloud.aws.ebs.VolumeReadBytes.By.VolumeId),\n        by: {VolumeId, aws.account.id, aws.region, dt.smartscape_source.id},\n            filter:{in(aws.account.id, array($AccountId))\n                    AND in(aws.region, array($Region)) AND\n                    in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($VolumeId)[]))) OR\n                      matchesValue($VolumeId, \"ALL\")}\n| fieldsAdd y = arraySum(x)\n| limit toLong($Limit)",
       "visualization": "lineChart",
       "visualizationSettings": {
-        "autoSelectVisualization": true,
+        "chartSettings": {
+          "truncationMode": "middle",
+          "leftYAxisSettings": {
+            "label": "Bytes"
+          },
+          "xAxisLabel": "timeframe",
+          "xAxisScaling": "auto",
+          "fieldMapping": {
+            "leftAxisValues": [
+              "x"
+            ],
+            "timestamp": "timeframe"
+          },
+          "gapPolicy": "gap"
+        },
+        "dataMapping": {
+          "displayedFields": [
+            "VolumeId"
+          ]
+        },
+        "legend": {
+          "ratio": 21
+        },
+        "autoSelectVisualization": false,
         "unitsOverrides": [
           {
             "identifier": "x",
-            "unitCategory": "unspecified",
-            "baseUnit": "none",
+            "unitCategory": "data",
+            "baseUnit": "byte",
             "displayUnit": null,
             "decimals": 0,
             "suffix": "",
             "delimiter": false,
-            "added": 1745587451193
-          }
-        ]
-      },
-      "querySettings": {
-        "maxResultRecords": 1000,
-        "defaultScanLimitGbytes": 500,
-        "maxResultMegaBytes": 1,
-        "defaultSamplingRatio": 10,
-        "enableSampling": false
-      },
-      "davis": {
-        "enabled": false,
-        "davisVisualization": {
-          "isAvailable": true
-        }
-      }
-    },
-    "67": {
-      "title": "Write IO operations",
-      "description": "The number of write disk I/O operations to the cluster volume, reported at 5-minute intervals.",
-      "type": "data",
-      "query": "timeseries x = avg(cloud.aws.rds.VolumeWriteIOPs.By.DBClusterIdentifier),\n            by: {DBClusterIdentifier, aws.account.id, aws.region, dt.smartscape_source.id},\n            filter:{in(aws.account.id, array($AccountId)) AND\n                    in(aws.region, array($Region)) AND\n                    (matchesValue($PrimaryTag,\"ANY\") or arraySize(array($PrimaryTagValues)) == 0 or in($PrimaryTag:noquote, arrayConcat(array($PrimaryTagValues), array(\"\")))) AND in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($AuroraClusterSmartscapeId)[])))}\n| sort arrayAvg(x) desc\n| limit toLong($Limit)",
-      "visualization": "lineChart",
-      "visualizationSettings": {
-        "autoSelectVisualization": true,
-        "unitsOverrides": [
-          {
-            "identifier": "x",
-            "unitCategory": "unspecified",
-            "baseUnit": "none",
-            "displayUnit": null,
-            "decimals": 0,
-            "suffix": "",
-            "delimiter": false,
-            "added": 1745587451193
+            "cascade": null,
+            "added": 1745585029433
           }
         ]
       },
@@ -1046,328 +565,147 @@
       }
     },
     "68": {
-      "type": "markdown",
-      "content": " "
+      "title": "Write bytes",
+      "description": "",
+      "type": "data",
+      "query": "timeseries x = sum(cloud.aws.ebs.VolumeWriteBytes.By.VolumeId),\n        by: {VolumeId, aws.account.id, aws.region, dt.smartscape_source.id},\n            filter:{in(aws.account.id, array($AccountId))\n                    AND in(aws.region, array($Region)) AND\n                    in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($VolumeId)[]))) OR\n                      matchesValue($VolumeId, \"ALL\")}\n| fieldsAdd y = arraySum(x)\n| limit toLong($Limit)",
+      "visualization": "lineChart",
+      "visualizationSettings": {
+        "chartSettings": {
+          "truncationMode": "middle",
+          "leftYAxisSettings": {
+            "label": "Bytes"
+          },
+          "xAxisLabel": "timeframe",
+          "xAxisScaling": "auto",
+          "fieldMapping": {
+            "leftAxisValues": [
+              "x"
+            ],
+            "timestamp": "timeframe"
+          },
+          "gapPolicy": "gap"
+        },
+        "dataMapping": {
+          "displayedFields": [
+            "VolumeId"
+          ]
+        },
+        "legend": {
+          "ratio": 21
+        },
+        "autoSelectVisualization": false,
+        "unitsOverrides": [
+          {
+            "identifier": "x",
+            "unitCategory": "data",
+            "baseUnit": "byte",
+            "displayUnit": null,
+            "decimals": 0,
+            "suffix": "",
+            "delimiter": false,
+            "cascade": null,
+            "added": 1745585099971
+          }
+        ]
+      },
+      "querySettings": {
+        "maxResultRecords": 1000,
+        "defaultScanLimitGbytes": 500,
+        "maxResultMegaBytes": 1,
+        "defaultSamplingRatio": 10,
+        "enableSampling": false
+      },
+      "davis": {
+        "enabled": false,
+        "davisVisualization": {
+          "isAvailable": true
+        }
+      }
     },
     "69": {
-      "type": "markdown",
-      "content": "### Additional information\n\nLearn more about Clouds Observability:\n* [Explore the Clouds App in Playground](https://wkf10640.apps.dynatrace.com/ui/apps/dynatrace.clouds/)\n\n* [Explore our documentation](https://docs.dynatrace.com/docs/observe/infrastructure-observability/cloud-platform-monitoring/clouds-app)"
+      "title": "Read operations",
+      "description": "",
+      "type": "data",
+      "query": "timeseries x = sum(cloud.aws.ebs.VolumeReadOps.By.VolumeId),\n        by: {VolumeId, aws.account.id, aws.region, dt.smartscape_source.id},\n            filter:{in(aws.account.id, array($AccountId))\n                    AND in(aws.region, array($Region)) AND\n                    in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($VolumeId)[]))) OR\n                      matchesValue($VolumeId, \"ALL\")}\n| fieldsAdd y = arraySum(x)\n| limit toLong($Limit)",
+      "visualization": "lineChart",
+      "visualizationSettings": {
+        "autoSelectVisualization": false,
+        "chartSettings": {
+          "fieldMapping": {
+            "leftAxisValues": [
+              "x"
+            ],
+            "timestamp": "timeframe"
+          },
+          "gapPolicy": "gap",
+          "leftYAxisSettings": {
+            "label": "Number of operations",
+            "isLabelVisible": true
+          },
+          "truncationMode": "middle",
+          "xAxisLabel": "timeframe",
+          "xAxisScaling": "auto"
+        },
+        "dataMapping": {
+          "displayedFields": [
+            "VolumeId"
+          ]
+        },
+        "legend": {
+          "ratio": 21
+        }
+      },
+      "querySettings": {
+        "maxResultRecords": 1000,
+        "defaultScanLimitGbytes": 500,
+        "maxResultMegaBytes": 1,
+        "defaultSamplingRatio": 10,
+        "enableSampling": false
+      },
+      "davis": {
+        "enabled": false,
+        "davisVisualization": {
+          "isAvailable": true
+        }
+      }
     },
     "70": {
-      "type": "markdown",
-      "content": "### Log Analytics\n\nLog distribution, volume trends, error breakdowns, patterns, and live tail. [Get deeper insights in Logs app](/ui/intent/dynatrace.logs/view_query/#%7B%22dt.query%22%3A%22fetch%20logs%2C%20scanLimitGBytes%3A100%5Cn%7C%20filter%20in%28toString%28dt.smartscape_source.id%29%2C%20array%28splitString%28%5C%22$InstanceSmartscapeId%5C%22%2C%20%5C%22%2C%5C%22%29%29%29%5Cn%7C%20filter%20in%28aws.account.id%2C%20array%28splitString%28%5C%22$AccountId%5C%22%2C%20%5C%22%2C%5C%22%29%29%29%5Cn%7C%20filter%20in%28aws.region%2C%20array%28splitString%28%5C%22$Region%5C%22%2C%20%5C%22%2C%5C%22%29%29%29%5Cn%7C%20filter%20status%20%3D%3D%20%5C%22ERROR%5C%22%5Cn%7C%20sort%20timestamp%20desc%22%2C%22dt.timeframe%22%3A%7B%22from%22%3A%22$dt_timeframe_from%22%2C%22to%22%3A%22$dt_timeframe_to%22%7D%2C%22showDqlEditor%22%3Atrue%7D).\n\n---"
-    },
-    "72": {
-      "title": "Log level distribution",
-      "description": "Share of log records per severity level.",
+      "title": "Write operations",
+      "description": "",
       "type": "data",
-      "query": "timeseries count = sum(dt.log.status_per_entity_count),\n      by: {status},\n      filter:{\n        (matchesValue($PrimaryTag,\"ANY\") or arraySize(array($PrimaryTagValues)) == 0 or in($PrimaryTag:noquote, arrayConcat(array($PrimaryTagValues), array(\"\")))) AND in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($InstanceSmartscapeId)[])))      \n      }\n  | fieldsAdd total = arraySum(count)\n  | filter total > 0\n  | sort total desc\n  | fields status, total",
-      "visualization": "donutChart",
+      "query": "timeseries x = sum(cloud.aws.ebs.VolumeWriteOps.By.VolumeId),\n        by: {VolumeId, aws.account.id, aws.region, dt.smartscape_source.id},\n            filter:{in(aws.account.id, array($AccountId))\n                    AND in(aws.region, array($Region)) AND\n                    in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($VolumeId)[]))) OR\n                      matchesValue($VolumeId, \"ALL\")}\n| fieldsAdd y = arraySum(x)\n| limit toLong($Limit)",
+      "visualization": "lineChart",
       "visualizationSettings": {
         "autoSelectVisualization": false,
-        "coloring": {
-          "colorRules": [
-            {
-              "colorMode": "color-palette",
-              "colorPalette": "log-status",
-              "comparator": "= *value*",
-              "field": "status",
-              "type": "string",
-              "value": ""
-            }
-          ]
-        }
-      },
-      "querySettings": {
-        "maxResultRecords": 100,
-        "defaultScanLimitGbytes": 100,
-        "maxResultMegaBytes": 1,
-        "defaultSamplingRatio": 10,
-        "enableSampling": false
-      },
-      "davis": {
-        "enabled": false,
-        "davisVisualization": {
-          "isAvailable": true
-        }
-      }
-    },
-    "74": {
-      "title": "Error and warning log patterns (last 15 minutes)",
-      "description": "**Query Explanation:**\n\nThis DQL query identifies recurring `ERROR` and `WARN` log patterns for selected Amazon RDS instances. It fetches logs for the selected RDS Smartscape IDs, AWS account and region, then normalizes the raw log content to reduce high-cardinality noise caused by values such as UUIDs, ARNs, timestamps, client IP addresses, hexadecimal values, durations and numeric identifiers.\n\nLogs are grouped by normalized pattern, status and DB instance. For each recurring pattern, the query keeps the RDS instance with the highest number of occurrences, helping identify which database instance is most affected by a repeated issue. Results are sorted by frequency and include a sample raw log entry to support investigation.\n",
-      "type": "data",
-      "query": "fetch logs, scanLimitGBytes: 100\n| filter (matchesValue($PrimaryTag,\"ANY\") or arraySize(array($PrimaryTagValues)) == 0 or in($PrimaryTag:noquote, arrayConcat(array($PrimaryTagValues), array(\"\")))) AND in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($InstanceSmartscapeId)[])))\n| filter in(aws.account.id, array($AccountId))\n| filter in(aws.region, array($Region))\n| filter in(status, array(\"ERROR\", \"WARN\"))\n\n| fieldsAdd `DB instance` = coalesce(\n    aws.resource.name,\n    aws.resource.id,\n    toString(dt.smartscape_source.id)\n  )\n\n| fieldsAdd pattern = toString(content)\n\n// Normalize high-cardinality identifiers first\n| fieldsAdd pattern = replacePattern(pattern, \"UUIDSTRING\", \"<UUID>\")\n| fieldsAdd pattern = replacePattern(pattern, \"'arn:' NSPACE+\", \"<ARN>\")\n\n// Normalize timestamps commonly present in database logs\n| fieldsAdd pattern = replacePattern(pattern, \"(ISO8601|HTTPDATE|JSONTIMESTAMP|TIMESTAMP|TIME)\", \"<TIME>\")\n| fieldsAdd pattern = replacePattern(pattern, \"INT ':' INT ':' INT '.' INT\", \"<TIME>\")\n\n// Normalize network values such as client addresses\n| fieldsAdd pattern = replacePattern(pattern, \"IPADDR\", \"<IP>\")\n\n// Normalize explicit hex values, transaction IDs, LSN-like values and memory addresses\n| fieldsAdd pattern = replacePattern(pattern, \"'0x' HEXINT\", \"<HEX>\")\n\n// Normalize SQL statement durations and numeric values\n| fieldsAdd pattern = replacePattern(pattern, \"INT '.' INT\", \"<NUMBER>\")\n| fieldsAdd pattern = replacePattern(pattern, \"DIGIT+\", \"<NUMBER>\")\n\n// Normalize whitespace\n| fieldsAdd pattern = replacePattern(pattern, \"SPACE+\", \" \")\n\n| summarize `Occurrences in DB instance` = count(),\n    `Log sample` = takeAny(content),\n    by: {\n      pattern,\n      status,\n      `DB instance`\n    }\n\n| filter `Occurrences in DB instance` > 1\n\n// Keep the DB instance with the highest occurrence count for each pattern and status\n| dedup { pattern, status }, sort: { `Occurrences in DB instance` desc, `DB instance` asc }\n\n| sort `Occurrences in DB instance` desc\n| limit 100\n\n| fields `Occurrences in DB instance`,\n    status,\n    pattern,\n    `DB instance with most occurrences` = `DB instance`,\n    `Log sample`",
-      "visualization": "table",
-      "visualizationSettings": {
-        "table": {
-          "sortBy": [
-            {
-              "columnId": "[\"pattern\"]",
-              "direction": "ascending"
-            }
+        "chartSettings": {
+          "fieldMapping": {
+            "leftAxisValues": [
+              "x"
+            ],
+            "timestamp": "timeframe"
+          },
+          "gapPolicy": "gap",
+          "leftYAxisSettings": {
+            "label": "Number of operations",
+            "isLabelVisible": true
+          },
+          "truncationMode": "middle",
+          "xAxisLabel": "timeframe",
+          "xAxisScaling": "auto"
+        },
+        "dataMapping": {
+          "displayedFields": [
+            "VolumeId"
           ]
         },
-        "autoSelectVisualization": true,
-        "coloring": {
-          "colorRules": [
-            {
-              "colorMode": "single-color",
-              "color": "var(--dt-colors-charts-loglevel-none-default, #2c2f3f)",
-              "comparator": "= *value*",
-              "field": "status",
-              "value": "",
-              "type": "string"
-            },
-            {
-              "colorMode": "single-color",
-              "color": "var(--dt-colors-charts-loglevel-emergency-default, #ae132d)",
-              "comparator": "=",
-              "field": "status",
-              "value": "EMERGENCY",
-              "type": "string"
-            },
-            {
-              "colorMode": "single-color",
-              "color": "var(--dt-colors-charts-loglevel-error-default, #cd3741)",
-              "comparator": "=",
-              "field": "status",
-              "value": "ERROR",
-              "type": "string"
-            },
-            {
-              "colorMode": "single-color",
-              "color": "var(--dt-colors-charts-loglevel-alert-default, #c73d84)",
-              "comparator": "=",
-              "field": "status",
-              "value": "ALERT",
-              "type": "string"
-            },
-            {
-              "colorMode": "single-color",
-              "color": "var(--dt-colors-charts-loglevel-critical-default, #d85a9f)",
-              "comparator": "=",
-              "field": "status",
-              "value": "CRITICAL",
-              "type": "string"
-            },
-            {
-              "colorMode": "single-color",
-              "color": "var(--dt-colors-charts-loglevel-severe-default, #d56b1a)",
-              "comparator": "=",
-              "field": "status",
-              "value": "SEVERE",
-              "type": "string"
-            },
-            {
-              "colorMode": "single-color",
-              "color": "var(--dt-colors-charts-loglevel-warning-default, #a9780f)",
-              "comparator": "= *value*",
-              "field": "status",
-              "value": "WARN",
-              "type": "string"
-            },
-            {
-              "colorMode": "single-color",
-              "color": "var(--dt-colors-charts-loglevel-notice-default, #2a7453)",
-              "comparator": "=",
-              "field": "status",
-              "value": "NOTICE",
-              "type": "string"
-            },
-            {
-              "colorMode": "single-color",
-              "color": "var(--dt-colors-charts-loglevel-info-default, #134fc9)",
-              "comparator": "=",
-              "field": "status",
-              "value": "INFO",
-              "type": "string"
-            },
-            {
-              "colorMode": "single-color",
-              "color": "var(--dt-colors-charts-loglevel-debug-default, #8b6ecf)",
-              "comparator": "=",
-              "field": "status",
-              "value": "DEBUG",
-              "type": "string"
-            }
-          ]
+        "legend": {
+          "ratio": 19
         }
       },
       "querySettings": {
-        "maxResultRecords": 100,
-        "defaultScanLimitGbytes": 100,
-        "maxResultMegaBytes": 1,
-        "defaultSamplingRatio": 10,
-        "enableSampling": false
-      },
-      "davis": {
-        "enabled": false,
-        "davisVisualization": {
-          "isAvailable": true
-        }
-      },
-      "timeframe": {
-        "tileTimeframeEnabled": true,
-        "tileTimeframe": {
-          "from": "now()-15m",
-          "to": "now()"
-        }
-      }
-    },
-    "75": {
-      "title": "Live log stream (last 15 minutes)",
-      "description": "**Query Explanation:**\n\nThis DQL query fetches the 100 most recent logs for selected Amazon RDS instances. It filters logs by selected RDS Smartscape ID, AWS account and AWS region. The query displays the raw log content as `Log message` without parsing or transforming the payload. It also derives a readable `DB instance` value from available AWS resource metadata, falling back to the Smartscape source ID when no resource name is available. Results are sorted by timestamp descending and show the key fields needed for live troubleshooting: time, status, log message, DB instance, AWS resource ID and Smartscape source ID.",
-      "type": "data",
-      "query": "fetch logs, scanLimitGBytes: 100\n| filter (matchesValue($PrimaryTag,\"ANY\") or arraySize(array($PrimaryTagValues)) == 0 or in($PrimaryTag:noquote, arrayConcat(array($PrimaryTagValues), array(\"\")))) AND in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($InstanceSmartscapeId)[])))\n| filter in(aws.account.id, array($AccountId))\n| filter in(aws.region, array($Region))\n\n| fieldsAdd `Log message` = toString(content)\n| fieldsAdd `DB instance` = coalesce(\n    aws.resource.name,\n    aws.resource.id,\n    toString(dt.smartscape_source.id)\n  )\n\n| sort timestamp desc\n| limit 100\n\n| fields timestamp = formatTimestamp(timestamp, format: \"HH:mm:ss a\"),\n    status,\n    `Log message`,\n    `DB instance`,\n    `Resource id` = aws.resource.id,\n    dt.smartscape_source.id",
-      "visualization": "table",
-      "visualizationSettings": {
-        "table": {
-          "columnTypeOverrides": [
-            {
-              "fields": [
-                "content"
-              ],
-              "id": 1780395485766,
-              "value": "log-content",
-              "disableRemoval": true
-            }
-          ]
-        },
-        "coloring": {
-          "colorRules": [
-            {
-              "colorMode": "single-color",
-              "color": "var(--dt-colors-charts-loglevel-none-default, #2c2f3f)",
-              "comparator": "= *value*",
-              "field": "status",
-              "value": "",
-              "type": "string"
-            },
-            {
-              "colorMode": "single-color",
-              "color": "var(--dt-colors-charts-loglevel-emergency-default, #ae132d)",
-              "comparator": "=",
-              "field": "status",
-              "value": "EMERGENCY",
-              "type": "string"
-            },
-            {
-              "colorMode": "single-color",
-              "color": "var(--dt-colors-charts-loglevel-error-default, #cd3741)",
-              "comparator": "=",
-              "field": "status",
-              "value": "ERROR",
-              "type": "string"
-            },
-            {
-              "colorMode": "single-color",
-              "color": "var(--dt-colors-charts-loglevel-alert-default, #c73d84)",
-              "comparator": "=",
-              "field": "status",
-              "value": "ALERT",
-              "type": "string"
-            },
-            {
-              "colorMode": "single-color",
-              "color": "var(--dt-colors-charts-loglevel-critical-default, #d85a9f)",
-              "comparator": "=",
-              "field": "status",
-              "value": "CRITICAL",
-              "type": "string"
-            },
-            {
-              "colorMode": "single-color",
-              "color": "var(--dt-colors-charts-loglevel-severe-default, #d56b1a)",
-              "comparator": "=",
-              "field": "status",
-              "value": "SEVERE",
-              "type": "string"
-            },
-            {
-              "colorMode": "single-color",
-              "color": "var(--dt-colors-charts-loglevel-warning-default, #a9780f)",
-              "comparator": "=",
-              "field": "status",
-              "value": "WARN",
-              "type": "string"
-            },
-            {
-              "colorMode": "single-color",
-              "color": "var(--dt-colors-charts-loglevel-notice-default, #2a7453)",
-              "comparator": "=",
-              "field": "status",
-              "value": "NOTICE",
-              "type": "string"
-            },
-            {
-              "colorMode": "single-color",
-              "comparator": "=",
-              "field": "status",
-              "value": "INFO",
-              "type": "string",
-              "color": "var(--dt-colors-charts-loglevel-info-default, #134fc9)"
-            },
-            {
-              "colorMode": "single-color",
-              "color": "var(--dt-colors-charts-loglevel-debug-default, #8b6ecf)",
-              "comparator": "=",
-              "field": "status",
-              "value": "DEBUG",
-              "type": "string"
-            }
-          ]
-        },
-        "autoSelectVisualization": false
-      },
-      "querySettings": {
-        "maxResultRecords": 100,
-        "defaultScanLimitGbytes": 100,
-        "maxResultMegaBytes": 1,
-        "defaultSamplingRatio": 10,
-        "enableSampling": false
-      },
-      "davis": {
-        "enabled": false,
-        "davisVisualization": {
-          "isAvailable": true
-        }
-      },
-      "timeframe": {
-        "tileTimeframeEnabled": true,
-        "tileTimeframe": {
-          "from": "now()-15m",
-          "to": "now()"
-        }
-      },
-      "segments": {
-        "tileSegments": [],
-        "tileSegmentsEnabled": false
-      }
-    },
-    "76": {
-      "title": "Log volume ",
-      "description": "**Query Explanation:**\n\nThis DQL query shows log volume over time by status for the selected Amazon RDS instances. It uses the `dt.log.status_per_entity_count` metric and groups results by log status, such as `ERROR`, `WARN`, `INFO` and `NONE`. The query filters the data to the selected RDS Smartscape IDs (`$InstanceSmartscapeId`), making the result specific to the selected database instances.\n\nA custom `sort_order` field is added to control how statuses are displayed in the dashboard. Statuses are ordered by severity, with `ERROR` and `WARN` prioritized above informational or empty-status logs. This makes it easier to quickly assess whether selected RDS instances are producing warning or error logs during the selected timeframe.\n",
-      "type": "data",
-      "query": "timeseries count = sum(dt.log.status_per_entity_count),\n    by: {status},\n    filter: {\n        (matchesValue($PrimaryTag,\"ANY\") or arraySize(array($PrimaryTagValues)) == 0 or in($PrimaryTag:noquote, arrayConcat(array($PrimaryTagValues), array(\"\")))) AND in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($InstanceSmartscapeId)[])))}\n| fieldsAdd sort_order = if(status == \"NONE\", 1, \n                         else: if(status == \"INFO\", 2,\n                         else: if(status == \"WARN\", 3,\n                         else: if(status == \"ERROR\", 4, else: 5))))\n| sort sort_order desc",
-      "visualization": "barChart",
-      "visualizationSettings": {
-        "autoSelectVisualization": false,
-        "coloring": {
-          "colorRules": [
-            {
-              "colorMode": "color-palette",
-              "colorPalette": "log-status",
-              "comparator": "= *value*",
-              "field": "status",
-              "type": "string",
-              "value": ""
-            }
-          ]
-        }
-      },
-      "querySettings": {
-        "maxResultRecords": 100,
-        "defaultScanLimitGbytes": 100,
+        "maxResultRecords": 1000,
+        "defaultScanLimitGbytes": 500,
         "maxResultMegaBytes": 1,
         "defaultSamplingRatio": 10,
         "enableSampling": false
@@ -1378,43 +716,176 @@
           "isAvailable": true
         }
       }
-    },
-    "77": {
-      "type": "markdown",
-      "content": "[View logs](/ui/intent/dynatrace.logs/view_query/#%7B%22dt.query%22%3A%22fetch%20logs%2C%20scanLimitGBytes%3A100%5Cn%7C%20filter%20in%28toString%28dt.smartscape_source.id%29%2C%20array%28splitString%28%5C%22$InstanceSmartscapeId%5C%22%2C%20%5C%22%2C%5C%22%29%29%29%5Cn%7C%20filter%20in%28aws.account.id%2C%20array%28splitString%28%5C%22$AccountId%5C%22%2C%20%5C%22%2C%5C%22%29%29%29%5Cn%7C%20filter%20in%28aws.region%2C%20array%28splitString%28%5C%22$Region%5C%22%2C%20%5C%22%2C%5C%22%29%29%29%5Cn%7C%20filter%20status%20%3D%3D%20%5C%22ERROR%5C%22%5Cn%7C%20sort%20timestamp%20desc%22%2C%22dt.timeframe%22%3A%7B%22from%22%3A%22$dt_timeframe_from%22%2C%22to%22%3A%22$dt_timeframe_to%22%7D%2C%22showDqlEditor%22%3Atrue%7D)"
     },
     "78": {
       "type": "markdown",
-      "content": "[+ Add logs](https://docs.dynatrace.com/docs/ingest-from/amazon-web-services/ingest-telemetry/cloudwatch-logs)"
+      "content": "### AWS EBS\nMonitor your block-storage service designed for EC2.\n"
     },
-    "79": {
+    "87": {
       "type": "markdown",
-      "content": "\n"
+      "content": "##### Disk activity"
     },
-    "80": {
-      "title": "Error logs",
-      "description": "**Query Explanation:**\n\nThis DQL query shows the number of `ERROR` logs over time for the selected Amazon RDS instances. It uses the `dt.log.status_per_entity_count` metric and groups the result by Smartscape source ID, so each selected RDS instance is represented as a separate time series. The query filters the data to the selected RDS Smartscape IDs (`$InstanceSmartscapeId`) and includes only logs with `ERROR` status. The number of returned series is controlled by the `$Limit` dashboard variable.\n\nTo make the result easier to read in a dashboard, the query performs a lookup against AWS RDS Smartscape nodes and resolves each Smartscape source ID to the corresponding database instance name. The resolved name is exposed as `aws.resource.name`, while intermediate lookup fields and the raw Smartscape source ID are removed from the final result.\n",
+    "99": {
+      "title": "Instances with highest CPU usage",
+      "description": "The most recent percentage of physical CPU time that Amazon EC2 uses to run the EC2 instance, which includes time spent to run both the user code and the Amazon EC2 code.",
       "type": "data",
-      "query": "timeseries count = sum(dt.log.status_per_entity_count),\n    by: { dt.smartscape_source.id },\n    filter: {\n        (matchesValue($PrimaryTag,\"ANY\") or arraySize(array($PrimaryTagValues)) == 0 or in($PrimaryTag:noquote, arrayConcat(array($PrimaryTagValues), array(\"\")))) AND in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($InstanceSmartscapeId)[]))) and\n        status == \"ERROR\"\n    }\n| limit toLong($Limit)\n| lookup [\n    smartscapeNodes \"AWS_RDS*\"\n    | fields id, name\n  ], sourceField:dt.smartscape_source.id, lookupField:id, prefix:\"entity.\"\n| fieldsAdd aws.resource.name = entity.name\n| fieldsRemove entity.name, entity.id, dt.smartscape_source.id",
+      "query": "timeseries max = max(cloud.aws.ec2.CPUUtilization.By.InstanceId), \n            by: {InstanceId, aws.account.id, aws.region, dt.smartscape_source.id},\n            filter:{in(aws.account.id, array($AccountId)) AND\n                    in(aws.region, array($Region)) AND\n                    (matchesValue($PrimaryTag,\"ANY\") or arraySize(array($PrimaryTagValues)) == 0 or in($PrimaryTag:noquote, arrayConcat(array($PrimaryTagValues), array(\"\")))) AND in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($SmartscapeId)[])))}\n| fieldsadd lastMaxCPU=toLong(arrayLast(max))\n| fields InstanceId, lastMaxCPU\n| sort lastMaxCPU desc\n| limit toLong($Limit)",
+      "visualization": "categoricalBarChart",
+      "visualizationSettings": {
+        "autoSelectVisualization": false,
+        "chartSettings": {
+          "legend": {
+            "hidden": true
+          },
+          "categoricalBarChartSettings": {
+            "categoryAxisLabel": "InstanceId",
+            "isCategoryLabelVisible": false,
+            "valueAxis": [
+              "lastMaxCPU"
+            ],
+            "valueAxisLabel": "Last max CPU"
+          }
+        },
+        "unitsOverrides": [
+          {
+            "identifier": "lastMaxCPU",
+            "unitCategory": "percentage",
+            "baseUnit": "percent",
+            "displayUnit": "percent",
+            "decimals": 1,
+            "suffix": "",
+            "delimiter": false,
+            "cascade": null,
+            "added": 1745392639266
+          }
+        ]
+      },
+      "querySettings": {
+        "maxResultRecords": 1000,
+        "defaultScanLimitGbytes": 500,
+        "maxResultMegaBytes": 1,
+        "defaultSamplingRatio": 10,
+        "enableSampling": false
+      },
+      "davis": {
+        "enabled": false,
+        "davisVisualization": {
+          "isAvailable": true
+        }
+      }
+    },
+    "100": {
+      "title": "Volumes idle time",
+      "description": "The total number of seconds in a specified period of time when no read or write operations were submitted.\nHigh idle time indicates underutilized resources like EBS volume attached to an EC2 instance that is not actively used.",
+      "type": "data",
+      "query": "timeseries x = avg(cloud.aws.ebs.VolumeIdleTime.By.VolumeId),\n            by: {VolumeId, Name, aws.account.id, aws.region, dt.smartscape_source.id},\n            filter:{in(aws.account.id, array($AccountId))\n                    AND in(aws.region, array($Region)) AND\n                    in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($VolumeId)[])))}\n| fieldsAdd VolumeIdleTime = arrayLast(x)\n| sort VolumeIdleTime desc\n| limit toLong($Limit)",
       "visualization": "barChart",
       "visualizationSettings": {
+        "dataMapping": {
+          "displayedFields": [
+            "VolumeId"
+          ]
+        },
+        "chartSettings": {
+          "truncationMode": "middle",
+          "legend": {
+            "hidden": true
+          },
+          "xAxisLabel": "timeframe",
+          "xAxisScaling": "analyzedTimeframe",
+          "fieldMapping": {
+            "leftAxisValues": [
+              "x"
+            ],
+            "timestamp": "timeframe"
+          }
+        },
+        "autoSelectVisualization": false,
+        "unitsOverrides": [
+          {
+            "identifier": "VolumeIdleTime",
+            "unitCategory": "angle",
+            "baseUnit": "second",
+            "displayUnit": "second",
+            "decimals": 2,
+            "suffix": "",
+            "delimiter": false,
+            "cascade": null,
+            "added": 1745392607147
+          }
+        ]
+      },
+      "querySettings": {
+        "maxResultRecords": 1000,
+        "defaultScanLimitGbytes": 500,
+        "maxResultMegaBytes": 1,
+        "defaultSamplingRatio": 10,
+        "enableSampling": false
+      },
+      "davis": {
+        "enabled": false,
+        "davisVisualization": {
+          "isAvailable": true
+        }
+      }
+    },
+    "101": {
+      "title": "Volumes queue length",
+      "description": "The number of read and write operation requests waiting to be completed in a specified period of time.",
+      "type": "data",
+      "query": "timeseries x = avg(cloud.aws.ebs.VolumeQueueLength.By.VolumeId),\n            by: {VolumeId, Name, aws.account.id, aws.region, dt.smartscape_source.id},\n            filter:{in(aws.account.id, array($AccountId))\n                    AND in(aws.region, array($Region)) AND\n                    in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($VolumeId)[]))) OR\n                      matchesValue($VolumeId, \"ALL\")}\n| fieldsAdd Length = arrayLast(x)\n| sort Length desc\n| limit toLong($Limit)",
+      "visualization": "barChart",
+      "visualizationSettings": {
+        "dataMapping": {
+          "displayedFields": [
+            "VolumeId"
+          ]
+        },
+        "chartSettings": {
+          "truncationMode": "middle",
+          "legend": {
+            "hidden": true
+          },
+          "xAxisLabel": "timeframe",
+          "xAxisScaling": "analyzedTimeframe",
+          "fieldMapping": {
+            "leftAxisValues": [
+              "x"
+            ],
+            "timestamp": "timeframe"
+          }
+        },
         "coloring": {
-          "colorRules": [
+          "thresholdRules": [
             {
-              "colorMode": "color-palette",
-              "colorPalette": "log-level",
-              "comparator": "= *value*",
-              "field": "DT.name",
-              "type": "string",
-              "value": ""
+              "color": "var(--dt-colors-charts-status-warning-default, #eca440)",
+              "colorMode": "single-color",
+              "max": null,
+              "min": 1,
+              "mode": "range",
+              "position": "left",
+              "strokeOnly": false
             }
           ]
         },
-        "autoSelectVisualization": false
+        "autoSelectVisualization": false,
+        "unitsOverrides": [
+          {
+            "identifier": "Length",
+            "unitCategory": "unspecified",
+            "baseUnit": "count",
+            "displayUnit": null,
+            "decimals": 2,
+            "suffix": "",
+            "delimiter": false,
+            "cascade": null,
+            "added": 1745392607147
+          }
+        ]
       },
       "querySettings": {
-        "maxResultRecords": 100,
-        "defaultScanLimitGbytes": 100,
+        "maxResultRecords": 1000,
+        "defaultScanLimitGbytes": 500,
         "maxResultMegaBytes": 1,
         "defaultSamplingRatio": 10,
         "enableSampling": false
@@ -1426,61 +897,459 @@
         }
       }
     },
-    "81": {
-      "type": "markdown",
-      "content": "[View logs](/ui/intent/dynatrace.logs/view_query/#%7B%22dt.query%22%3A%22fetch%20logs%2C%20scanLimitGBytes%3A100%5Cn%7C%20filter%20in%28toString%28dt.smartscape_source.id%29%2C%20array%28splitString%28%5C%22$InstanceSmartscapeId%5C%22%2C%20%5C%22%2C%5C%22%29%29%29%5Cn%7C%20filter%20in%28aws.account.id%2C%20array%28splitString%28%5C%22$AccountId%5C%22%2C%20%5C%22%2C%5C%22%29%29%29%5Cn%7C%20filter%20in%28aws.region%2C%20array%28splitString%28%5C%22$Region%5C%22%2C%20%5C%22%2C%5C%22%29%29%29%5Cn%7C%20filter%20status%20%3D%3D%20%5C%22ERROR%5C%22%5Cn%7C%20sort%20timestamp%20desc%22%2C%22dt.timeframe%22%3A%7B%22from%22%3A%22$dt_timeframe_from%22%2C%22to%22%3A%22$dt_timeframe_to%22%7D%2C%22showDqlEditor%22%3Atrue%7D)"
+    "102": {
+      "title": "Burst balance percentage",
+      "description": "Percentage of I/O credits (for gp2) or throughput credits (for st1 and sc1) remaining in the burst bucket.",
+      "type": "data",
+      "query": "timeseries x = avg(cloud.aws.ebs.BurstBalance.By.VolumeId),\n            by: {VolumeId, Name, aws.account.id, aws.region, dt.smartscape_source.id},\n            filter:{in(aws.account.id, array($AccountId))\n                    AND in(aws.region, array($Region)) AND\n                    in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($VolumeId)[]))) OR\n                      matchesValue($VolumeId, \"ALL\")}\n| fieldsAdd y = arrayAvg(x)\n| limit toLong($Limit)",
+      "visualization": "lineChart",
+      "visualizationSettings": {
+        "chartSettings": {
+          "truncationMode": "middle",
+          "xAxisLabel": "timeframe",
+          "xAxisScaling": "analyzedTimeframe",
+          "fieldMapping": {
+            "leftAxisValues": [
+              "x"
+            ],
+            "timestamp": "timeframe"
+          }
+        },
+        "dataMapping": {
+          "displayedFields": [
+            "VolumeId"
+          ]
+        },
+        "coloring": {
+          "thresholdRules": [
+            {
+              "color": "var(--dt-colors-charts-loglevel-emergency-default, #ae132d)",
+              "colorMode": "single-color",
+              "label": "Burst balance is being used",
+              "max": 99,
+              "min": null,
+              "mode": "range",
+              "position": "left",
+              "strokeOnly": false
+            }
+          ]
+        },
+        "autoSelectVisualization": false,
+        "unitsOverrides": [
+          {
+            "identifier": "y",
+            "unitCategory": "percentage",
+            "baseUnit": "percent",
+            "displayUnit": "percent",
+            "decimals": 2,
+            "suffix": "",
+            "delimiter": false,
+            "cascade": null,
+            "added": 1745392607147
+          }
+        ]
+      },
+      "querySettings": {
+        "defaultSamplingRatio": 10,
+        "defaultScanLimitGbytes": 500,
+        "enableSampling": false,
+        "maxResultMegaBytes": 1,
+        "maxResultRecords": 1000
+      },
+      "davis": {
+        "enabled": false,
+        "davisVisualization": {
+          "isAvailable": true
+        }
+      }
     },
-    "82": {
+    "105": {
       "type": "markdown",
-      "content": "[+ Add logs](https://docs.dynatrace.com/docs/ingest-from/amazon-web-services/ingest-telemetry/cloudwatch-logs)"
+      "content": "### AWS Auto Scaling groups\nMonitor the Auto Scaling groups that contain your fleet of EC2 instances. \n"
     },
-    "83": {
+    "106": {
+      "title": "Auto Scaling groups by group max size",
+      "description": "",
+      "type": "data",
+      "query": "timeseries {max = max(cloud.aws.autoscaling.GroupMaxSize.By.AutoScalingGroupName),\n            min = max(cloud.aws.autoscaling.GroupMinSize.By.AutoScalingGroupName)},\n            by: {AutoScalingGroupName, aws.account.id, aws.region, dt.smartscape_source.id},\n            filter:{in(aws.account.id, array($AccountId)) AND\n                    in(aws.region, array($Region))\n                    AND in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($AutoscalingGroup)[])))}\n| fieldsAdd MaxSize = arrayLast(max), MinSize = arrayLast(min)\n| sort MaxSize desc\n| limit toLong($Limit)",
+      "visualization": "categoricalBarChart",
+      "visualizationSettings": {
+        "autoSelectVisualization": false,
+        "chartSettings": {
+          "categoricalBarChartSettings": {
+            "categoryAxis": [
+              "AutoScalingGroupName"
+            ],
+            "categoryAxisLabel": "AutoScalingGroupName,aws.account.id,aws.region,dt.smartscape_source.id",
+            "valueAxisLabel": "MaxSize,MinSize"
+          },
+          "truncationMode": "middle"
+        }
+      },
+      "querySettings": {
+        "defaultSamplingRatio": 10,
+        "defaultScanLimitGbytes": 500,
+        "enableSampling": false,
+        "maxResultMegaBytes": 1,
+        "maxResultRecords": 1000
+      },
+      "davis": {
+        "enabled": false,
+        "davisVisualization": {
+          "isAvailable": true
+        }
+      }
+    },
+    "107": {
+      "title": "Auto Scaling groups by desired capacity",
+      "description": "The number of instances that the Auto Scaling groups attempt to maintain.",
+      "type": "data",
+      "query": "timeseries cap = max(cloud.aws.autoscaling.GroupDesiredCapacity.By.AutoScalingGroupName),\n            by: {AutoScalingGroupName, aws.account.id, aws.region, dt.smartscape_source.id},\n            filter:{in(aws.account.id, array($AccountId)) AND\n                    in(aws.region, array($Region))\n                    AND in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($AutoscalingGroup)[])))}\n| fieldsAdd Capacity = arrayMax(cap)\n| sort Capacity desc\n| limit toLong($Limit)",
+      "visualization": "categoricalBarChart",
+      "visualizationSettings": {
+        "autoSelectVisualization": false,
+        "chartSettings": {
+          "categoricalBarChartSettings": {
+            "categoryAxis": [
+              "AutoScalingGroupName"
+            ],
+            "categoryAxisLabel": "AutoScalingGroupName,aws.account.id,aws.region,dt.smartscape_source.id",
+            "valueAxisLabel": "Capacity"
+          },
+          "legend": {
+            "hidden": true
+          },
+          "truncationMode": "middle"
+        }
+      },
+      "querySettings": {
+        "defaultSamplingRatio": 10,
+        "defaultScanLimitGbytes": 500,
+        "enableSampling": false,
+        "maxResultMegaBytes": 1,
+        "maxResultRecords": 1000
+      },
+      "davis": {
+        "enabled": false,
+        "davisVisualization": {
+          "isAvailable": true
+        }
+      }
+    },
+    "108": {
+      "title": "In-service instances",
+      "description": "The number of instances that are running as part of the Auto Scaling group.",
+      "type": "data",
+      "query": "timeseries instances = avg(cloud.aws.autoscaling.GroupInServiceInstances.By.AutoScalingGroupName),\n            by: {AutoScalingGroupName, aws.account.id, aws.region, dt.smartscape_source.id},\n            filter:{in(aws.account.id, array($AccountId)) AND\n                    in(aws.region, array($Region))\n                    AND in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($AutoscalingGroup)[])))}\n| sort arrayAvg(instances) desc\n| limit toLong($Limit)",
+      "visualization": "lineChart",
+      "visualizationSettings": {
+        "autoSelectVisualization": false,
+        "chartSettings": {
+          "fieldMapping": {
+            "leftAxisValues": [
+              "instances"
+            ],
+            "timestamp": "timeframe"
+          },
+          "leftYAxisSettings": {
+            "isLabelVisible": true,
+            "label": "Number of instances"
+          },
+          "truncationMode": "middle",
+          "xAxisLabel": "timeframe",
+          "xAxisScaling": "analyzedTimeframe"
+        },
+        "dataMapping": {
+          "displayedFields": [
+            "AutoScalingGroupName"
+          ]
+        }
+      },
+      "querySettings": {
+        "defaultSamplingRatio": 10,
+        "defaultScanLimitGbytes": 500,
+        "enableSampling": false,
+        "maxResultMegaBytes": 1,
+        "maxResultRecords": 1000
+      },
+      "davis": {
+        "enabled": false,
+        "davisVisualization": {
+          "isAvailable": true
+        }
+      }
+    },
+    "109": {
+      "title": "Pending instances",
+      "description": "The number of instances that are pending. A pending instance is not yet in service.",
+      "type": "data",
+      "query": "timeseries instances = avg(cloud.aws.autoscaling.GroupPendingInstances.By.AutoScalingGroupName),\n            by: {AutoScalingGroupName, aws.account.id, aws.region, dt.smartscape_source.id},\n            filter:{in(aws.account.id, array($AccountId)) AND\n                    in(aws.region, array($Region))\n                    AND in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($AutoscalingGroup)[])))}\n| fieldsAdd currentValue = arrayLast(instances)\n| fieldsadd current_status = if(currentValue==0, \"\", else: \"PENDING\")\n| limit toLong($Limit)",
+      "visualization": "barChart",
+      "visualizationSettings": {
+        "autoSelectVisualization": false,
+        "chartSettings": {
+          "fieldMapping": {
+            "leftAxisValues": [
+              "instances"
+            ],
+            "timestamp": "timeframe"
+          },
+          "leftYAxisSettings": {
+            "isLabelVisible": true,
+            "label": "Number of instances"
+          },
+          "truncationMode": "middle",
+          "xAxisLabel": "timeframe",
+          "xAxisScaling": "analyzedTimeframe"
+        },
+        "coloring": {
+          "thresholdRules": [
+            {
+              "color": "var(--dt-colors-charts-status-warning-default, #eca440)",
+              "colorMode": "single-color",
+              "max": null,
+              "min": 0,
+              "mode": "range",
+              "position": "left",
+              "strokeOnly": false
+            }
+          ]
+        },
+        "dataMapping": {
+          "displayedFields": [
+            "AutoScalingGroupName"
+          ]
+        }
+      },
+      "querySettings": {
+        "defaultSamplingRatio": 10,
+        "defaultScanLimitGbytes": 500,
+        "enableSampling": false,
+        "maxResultMegaBytes": 1,
+        "maxResultRecords": 1000
+      },
+      "davis": {
+        "enabled": false,
+        "davisVisualization": {
+          "isAvailable": true
+        }
+      }
+    },
+    "110": {
+      "title": "Standby instances",
+      "description": "The number of instances that are in a Standby state. Instances in this state are still running but are not actively in service.",
+      "type": "data",
+      "query": "timeseries instances = avg(cloud.aws.autoscaling.GroupStandbyInstances.By.AutoScalingGroupName),\n            by: {AutoScalingGroupName, aws.account.id, aws.region, dt.smartscape_source.id},\n            filter:{in(aws.account.id, array($AccountId)) AND\n                    in(aws.region, array($Region))\n                    AND in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($AutoscalingGroup)[])))}\n| sort arrayAvg(instances) desc\n| limit toLong($Limit)",
+      "visualization": "barChart",
+      "visualizationSettings": {
+        "autoSelectVisualization": false,
+        "chartSettings": {
+          "fieldMapping": {
+            "leftAxisValues": [
+              "instances"
+            ],
+            "timestamp": "timeframe"
+          },
+          "leftYAxisSettings": {
+            "isLabelVisible": true,
+            "label": "Number of instances"
+          },
+          "truncationMode": "middle",
+          "xAxisLabel": "timeframe",
+          "xAxisScaling": "analyzedTimeframe"
+        },
+        "dataMapping": {
+          "displayedFields": [
+            "AutoScalingGroupName"
+          ]
+        }
+      },
+      "querySettings": {
+        "defaultSamplingRatio": 10,
+        "defaultScanLimitGbytes": 500,
+        "enableSampling": false,
+        "maxResultMegaBytes": 1,
+        "maxResultRecords": 1000
+      },
+      "davis": {
+        "enabled": false,
+        "davisVisualization": {
+          "isAvailable": true
+        }
+      }
+    },
+    "111": {
+      "title": "Terminating instances",
+      "description": "The number of instances that are in the process of terminating. This metric does not include instances that are in service, pending, or returning to a warm pool after Auto Scaling group scale in.",
+      "type": "data",
+      "query": "timeseries instances = avg(cloud.aws.autoscaling.GroupTerminatingInstances.By.AutoScalingGroupName),\n            by: {AutoScalingGroupName, aws.account.id, aws.region, dt.smartscape_source.id},\n            filter:{in(aws.account.id, array($AccountId)) AND\n                    in(aws.region, array($Region))\n                    AND in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($AutoscalingGroup)[])))}\n| sort arrayAvg(instances) desc\n| limit toLong($Limit)",
+      "visualization": "lineChart",
+      "visualizationSettings": {
+        "autoSelectVisualization": false,
+        "chartSettings": {
+          "fieldMapping": {
+            "leftAxisValues": [
+              "instances"
+            ],
+            "timestamp": "timeframe"
+          },
+          "leftYAxisSettings": {
+            "isLabelVisible": true,
+            "label": "Number of instances"
+          },
+          "truncationMode": "middle",
+          "xAxisLabel": "timeframe",
+          "xAxisScaling": "analyzedTimeframe"
+        },
+        "dataMapping": {
+          "displayedFields": [
+            "AutoScalingGroupName"
+          ]
+        }
+      },
+      "querySettings": {
+        "defaultSamplingRatio": 10,
+        "defaultScanLimitGbytes": 500,
+        "enableSampling": false,
+        "maxResultMegaBytes": 1,
+        "maxResultRecords": 1000
+      },
+      "davis": {
+        "enabled": false,
+        "davisVisualization": {
+          "isAvailable": true
+        }
+      }
+    },
+    "112": {
       "type": "markdown",
-      "content": "### Problems & Warnings\nProblems and warning signals for your AWS RDS. [Investigate active problems](/ui/apps/dynatrace.davis.problems/)."
+      "content": "##### Network"
     },
-    "84": {
+    "116": {
+      "title": "Status Check failures",
+      "type": "data",
+      "query": "timeseries checkFailedCount=max(cloud.aws.ec2.StatusCheckFailed.By.InstanceId),\n            by: {InstanceId, aws.account.id, aws.region, dt.smartscape_source.id},\n            filter:{in(aws.account.id, array($AccountId)) AND\n                    in(aws.region, array($Region)) AND\n                    (matchesValue($PrimaryTag,\"ANY\") or arraySize(array($PrimaryTagValues)) == 0 or in($PrimaryTag:noquote, arrayConcat(array($PrimaryTagValues), array(\"\")))) AND in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($SmartscapeId)[])))}\n| sort arraySum(checkFailedCount) desc\n| limit toLong($Limit)",
+      "visualization": "lineChart",
+      "visualizationSettings": {
+        "autoSelectVisualization": false,
+        "chartSettings": {
+          "truncationMode": "middle",
+          "xAxisLabel": "timeframe",
+          "xAxisScaling": "analyzedTimeframe",
+          "fieldMapping": {
+            "leftAxisValues": [
+              "checkFailedCount"
+            ],
+            "timestamp": "timeframe"
+          },
+          "gapPolicy": "gap"
+        },
+        "dataMapping": {
+          "displayedFields": [
+            "InstanceId"
+          ]
+        }
+      },
+      "querySettings": {
+        "maxResultRecords": 1000,
+        "defaultScanLimitGbytes": 500,
+        "maxResultMegaBytes": 1,
+        "defaultSamplingRatio": 10,
+        "enableSampling": false
+      },
+      "davis": {
+        "enabled": false,
+        "davisVisualization": {
+          "isAvailable": true
+        }
+      }
+    },
+    "117": {
+      "title": "CPU Credits Balance",
+      "type": "data",
+      "query": "timeseries CPUCreditsBalance=avg(cloud.aws.ec2.CPUCreditBalance.By.InstanceId),\n            by: {InstanceId, aws.account.id, aws.region, dt.smartscape_source.id},\n            filter:{in(aws.account.id, array($AccountId)) AND\n                    in(aws.region, array($Region)) AND\n                    (matchesValue($PrimaryTag,\"ANY\") or arraySize(array($PrimaryTagValues)) == 0 or in($PrimaryTag:noquote, arrayConcat(array($PrimaryTagValues), array(\"\")))) AND in(dt.smartscape_source.id, iCollectArray(toSmartscapeId(array($SmartscapeId)[])))}\n| sort arrayAvg(CPUCreditsBalance) desc\n| limit toLong($Limit)",
+      "visualization": "lineChart",
+      "visualizationSettings": {
+        "autoSelectVisualization": false,
+        "chartSettings": {
+          "truncationMode": "middle",
+          "xAxisLabel": "timeframe",
+          "xAxisScaling": "analyzedTimeframe",
+          "gapPolicy": "gap",
+          "pointsDisplay": "auto"
+        },
+        "dataMapping": {
+          "displayedFields": [
+            "InstanceId"
+          ]
+        }
+      },
+      "querySettings": {
+        "maxResultRecords": 1000,
+        "defaultScanLimitGbytes": 500,
+        "maxResultMegaBytes": 1,
+        "defaultSamplingRatio": 10,
+        "enableSampling": false
+      },
+      "davis": {
+        "enabled": false,
+        "davisVisualization": {
+          "isAvailable": true
+        }
+      }
+    },
+    "118": {
+      "type": "markdown",
+      "content": "##### CPU and usage"
+    },
+    "121": {
+      "type": "markdown",
+      "content": "### Additional information\n\nLearn more about Clouds Observability:\n* [Explore the Clouds App in Playground](https://wkf10640.apps.dynatrace.com/ui/apps/dynatrace.clouds/)\n\n* [Explore our documentation](https://docs.dynatrace.com/docs/observe/infrastructure-observability/cloud-platform-monitoring/clouds-app)"
+    },
+    "122": {
+      "type": "markdown",
+      "content": "### Problems & Warnings\nProblems and warning signals for your AWS EC2. [Investigate active problems](/ui/apps/dynatrace.davis.problems/).\n"
+    },
+    "123": {
       "title": "Active Problems",
       "type": "data",
-      "query": "fetch dt.davis.problems\n| filter contains(toString(smartscape.affected_entities), \"AWS_RDS_DBINSTANCE\") OR contains(toString(affected_entity_types), \"aws_rds_dbinstance\") OR contains(toString(smartscape.affected_entities), \"AWS_RDS_DBCLUSTER\") OR contains(toString(affected_entity_types), \"aws_rds_dbcluster\")\n| filter event.status == \"ACTIVE\"\n| filter isNull(dt.davis.is_duplicate) OR not(dt.davis.is_duplicate)\n| summarize count()",
+      "query": "fetch dt.davis.problems\n| filter contains(toString(smartscape.affected_entities), \"AWS_EC2_INSTANCE\") OR contains(toString(affected_entity_types), \"aws_ec2_instance\")\n| filter event.status == \"ACTIVE\"\n| filter isNull(dt.davis.is_duplicate) OR not(dt.davis.is_duplicate)\n| summarize count()",
       "visualization": "singleValue",
       "visualizationSettings": {
         "singleValue": {
           "labelMode": "none",
           "label": "count()",
           "recordField": "count()",
-          "prefixIcon": "",
+          "prefixIcon": "CriticalIcon",
           "trend": {
             "isVisible": false
-          }
+          },
+          "isIconVisible": true
         },
-        "thresholds": [
-          {
-            "id": 1,
-            "field": "count()",
-            "title": "",
-            "isEnabled": true,
-            "rules": [
-              {
-                "id": 1,
-                "color": {
-                  "Default": "var(--dt-colors-charts-status-ideal-default, #2f6863)"
-                },
-                "comparator": "=",
-                "label": "",
-                "value": 0
+        "coloring": {
+          "colorRules": [
+            {
+              "value": 0,
+              "comparator": ">",
+              "field": "count()",
+              "colorMode": "custom-color",
+              "customColor": {
+                "Default": "var(--dt-colors-charts-status-critical-default, #c4233b)"
               },
-              {
-                "id": 2,
-                "color": {
-                  "Default": "var(--dt-colors-charts-status-critical-default, #c4233b)"
-                },
-                "comparator": ">",
-                "label": "",
-                "value": 0
-              }
-            ]
-          }
-        ]
+              "type": "double"
+            },
+            {
+              "value": 0,
+              "comparator": "=",
+              "field": "count()",
+              "colorMode": "custom-color",
+              "customColor": {
+                "Default": "var(--dt-colors-charts-status-ideal-default, #2f6863)"
+              },
+              "type": "double"
+            }
+          ]
+        }
       },
       "querySettings": {
         "maxResultRecords": 1000,
@@ -1496,49 +1365,46 @@
         }
       }
     },
-    "85": {
+    "124": {
       "title": "Active warning signals",
       "type": "data",
-      "query": "fetch dt.davis.events.snapshots\n| filter contains(toString(smartscape.affected_entities), \"AWS_RDS_DBINSTANCE\") OR contains(toString(affected_entity_types), \"aws_rds_dbinstance\") OR contains(toString(smartscape.affected_entities), \"AWS_RDS_DBCLUSTER\") OR contains(toString(affected_entity_types), \"aws_rds_dbcluster\")\n| filter event.type == \"WARNING\"\n| dedup event.id, sort: {timestamp desc}\n| filter event.status == \"ACTIVE\"\n| summarize count()",
+      "query": "fetch dt.davis.events.snapshots\n| filter contains(toString(smartscape.affected_entities), \"AWS_EC2_INSTANCE\") OR contains(toString(affected_entity_types), \"aws_ec2_instance\")\n| filter event.type == \"WARNING\"\n| dedup event.id, sort: {timestamp desc}\n| filter event.status == \"ACTIVE\"\n| summarize count()",
       "visualization": "singleValue",
       "visualizationSettings": {
         "singleValue": {
           "labelMode": "none",
           "label": "count()",
           "recordField": "count()",
-          "prefixIcon": "",
+          "prefixIcon": "WarningIcon",
           "trend": {
             "isVisible": false
-          }
+          },
+          "isIconVisible": true
         },
-        "thresholds": [
-          {
-            "id": 1,
-            "field": "count()",
-            "title": "",
-            "isEnabled": true,
-            "rules": [
-              {
-                "id": 1,
-                "color": {
-                  "Default": "var(--dt-colors-charts-loglevel-warning-default, #a9780f)"
-                },
-                "comparator": ">",
-                "label": "",
-                "value": 0
+        "coloring": {
+          "colorRules": [
+            {
+              "value": 0,
+              "comparator": ">",
+              "field": "count()",
+              "colorMode": "custom-color",
+              "customColor": {
+                "Default": "var(--dt-colors-charts-loglevel-warning-default, #a9780f)"
               },
-              {
-                "id": 2,
-                "color": {
-                  "Default": "var(--dt-colors-charts-status-ideal-default, #2f6863)"
-                },
-                "comparator": "=",
-                "label": "",
-                "value": 0
-              }
-            ]
-          }
-        ]
+              "type": "double"
+            },
+            {
+              "value": 0,
+              "comparator": "=",
+              "field": "count()",
+              "colorMode": "custom-color",
+              "customColor": {
+                "Default": "var(--dt-colors-charts-status-ideal-default, #2f6863)"
+              },
+              "type": "double"
+            }
+          ]
+        }
       },
       "querySettings": {
         "maxResultRecords": 1000,
@@ -1554,10 +1420,10 @@
         }
       }
     },
-    "86": {
+    "125": {
       "title": "Active problems details",
       "type": "data",
-      "query": "fetch dt.davis.problems\n| filter contains(toString(smartscape.affected_entities), \"AWS_RDS_DBINSTANCE\") OR contains(toString(affected_entity_types), \"aws_rds_dbinstance\") OR contains(toString(smartscape.affected_entities), \"AWS_RDS_DBCLUSTER\") OR contains(toString(affected_entity_types), \"aws_rds_dbcluster\")\n| filter event.status == \"ACTIVE\"\n| filter isNull(dt.davis.is_duplicate) OR not(dt.davis.is_duplicate)\n| fields display_id, event.name, event.category, event.start\n| fieldsRename id = display_id, problem = event.name, category = event.category, start = event.start\n| sort category asc",
+      "query": "fetch dt.davis.problems\n| filter contains(toString(smartscape.affected_entities), \"AWS_EC2_INSTANCE\") OR contains(toString(affected_entity_types), \"aws_ec2_instance\")\n| filter event.status == \"ACTIVE\"\n| filter isNull(dt.davis.is_duplicate) OR not(dt.davis.is_duplicate)\n| fields display_id, event.name, event.category, event.start\n| fieldsRename id = display_id, problem = event.name, category = event.category, start = event.start\n| sort category asc",
       "visualization": "table",
       "visualizationSettings": {
         "autoSelectVisualization": false
@@ -1576,10 +1442,10 @@
         }
       }
     },
-    "87": {
+    "126": {
       "title": "Active warnings details",
       "type": "data",
-      "query": "fetch dt.davis.events.snapshots\n| filter contains(toString(smartscape.affected_entities), \"AWS_RDS_DBINSTANCE\") OR contains(toString(affected_entity_types), \"aws_rds_dbinstance\") OR contains(toString(smartscape.affected_entities), \"AWS_RDS_DBCLUSTER\") OR contains(toString(affected_entity_types), \"aws_rds_dbcluster\")\n| filter event.type == \"WARNING\"\n| dedup event.id, sort: {timestamp desc}\n| filter event.status == \"ACTIVE\"\n| fields event.name, event.category, event.start\n| fieldsRename name = event.name, category = event.category, start = event.start\n| sort category asc",
+      "query": "fetch dt.davis.events.snapshots\n| filter contains(toString(smartscape.affected_entities), \"AWS_EC2_INSTANCE\") OR contains(toString(affected_entity_types), \"aws_ec2_instance\")\n| filter event.type == \"WARNING\"\n| dedup event.id, sort: {timestamp desc}\n| filter event.status == \"ACTIVE\"\n| fields event.name, event.category, event.start\n| fieldsRename name = event.name, category = event.category, start = event.start\n| sort category asc",
       "visualization": "table",
       "visualizationSettings": {
         "autoSelectVisualization": false
@@ -1600,255 +1466,219 @@
     }
   },
   "layouts": {
-    "12": {
-      "x": 12,
-      "y": 42,
+    "4": {
+      "x": 0,
+      "y": 15,
       "w": 12,
       "h": 5
     },
-    "21": {
-      "x": 12,
-      "y": 23,
-      "w": 12,
-      "h": 6
-    },
-    "24": {
-      "x": 0,
-      "y": 22,
-      "w": 24,
-      "h": 1
-    },
-    "25": {
-      "x": 12,
-      "y": 30,
-      "w": 12,
-      "h": 6
-    },
     "27": {
-      "x": 0,
-      "y": 30,
-      "w": 12,
-      "h": 6
-    },
-    "28": {
-      "x": 0,
-      "y": 37,
-      "w": 24,
+      "x": 8,
+      "y": 5,
+      "w": 8,
       "h": 5
     },
     "29": {
-      "x": 0,
-      "y": 42,
-      "w": 12,
-      "h": 5
-    },
-    "33": {
       "x": 0,
       "y": 0,
       "w": 24,
       "h": 3
     },
-    "40": {
+    "30": {
       "x": 0,
-      "y": 36,
-      "w": 24,
-      "h": 1
-    },
-    "49": {
-      "x": 0,
-      "y": 29,
-      "w": 24,
-      "h": 1
-    },
-    "50": {
-      "x": 0,
-      "y": 6,
-      "w": 4,
-      "h": 6
-    },
-    "51": {
-      "x": 0,
-      "y": 12,
-      "w": 12,
+      "y": 5,
+      "w": 8,
       "h": 5
+    },
+    "31": {
+      "x": 0,
+      "y": 3,
+      "w": 8,
+      "h": 2
     },
     "52": {
-      "x": 12,
-      "y": 12,
-      "w": 12,
-      "h": 5
+      "x": 20,
+      "y": 21,
+      "w": 4,
+      "h": 3
     },
-    "54": {
-      "x": 0,
-      "y": 17,
-      "w": 12,
-      "h": 5
-    },
-    "55": {
-      "x": 12,
-      "y": 17,
-      "w": 12,
-      "h": 5
-    },
-    "56": {
-      "x": 0,
-      "y": 23,
-      "w": 12,
-      "h": 6
+    "53": {
+      "x": 20,
+      "y": 24,
+      "w": 4,
+      "h": 3
     },
     "57": {
-      "x": 10,
-      "y": 6,
-      "w": 6,
-      "h": 3
+      "x": 0,
+      "y": 21,
+      "w": 10,
+      "h": 6
     },
     "58": {
       "x": 10,
-      "y": 9,
-      "w": 6,
-      "h": 3
-    },
-    "59": {
-      "x": 4,
-      "y": 6,
-      "w": 6,
-      "h": 3
-    },
-    "60": {
-      "x": 4,
-      "y": 9,
-      "w": 6,
-      "h": 3
-    },
-    "62": {
-      "x": 0,
-      "y": 48,
-      "w": 24,
-      "h": 2
-    },
-    "65": {
-      "x": 0,
-      "y": 55,
-      "w": 24,
-      "h": 5
+      "y": 21,
+      "w": 10,
+      "h": 6
     },
     "66": {
       "x": 0,
-      "y": 50,
-      "w": 12,
-      "h": 5
-    },
-    "67": {
-      "x": 12,
-      "y": 50,
+      "y": 35,
       "w": 12,
       "h": 5
     },
     "68": {
-      "x": 0,
-      "y": 47,
-      "w": 24,
-      "h": 1
+      "x": 12,
+      "y": 35,
+      "w": 12,
+      "h": 5
     },
     "69": {
       "x": 0,
-      "y": 85,
-      "w": 24,
-      "h": 3
+      "y": 40,
+      "w": 12,
+      "h": 5
     },
     "70": {
-      "x": 0,
-      "y": 69,
-      "w": 24,
-      "h": 2
-    },
-    "72": {
-      "x": 0,
-      "y": 71,
-      "w": 8,
-      "h": 5
-    },
-    "74": {
-      "x": 0,
-      "y": 77,
-      "w": 12,
-      "h": 8
-    },
-    "75": {
       "x": 12,
-      "y": 77,
+      "y": 40,
       "w": 12,
-      "h": 8
-    },
-    "76": {
-      "x": 8,
-      "y": 71,
-      "w": 16,
-      "h": 6
-    },
-    "77": {
-      "x": 0,
-      "y": 76,
-      "w": 4,
-      "h": 1
+      "h": 5
     },
     "78": {
-      "x": 4,
-      "y": 76,
-      "w": 4,
-      "h": 1
-    },
-    "79": {
       "x": 0,
-      "y": 60,
-      "w": 24,
-      "h": 1
-    },
-    "80": {
-      "x": 16,
-      "y": 6,
-      "w": 8,
-      "h": 5
-    },
-    "81": {
-      "x": 16,
-      "y": 11,
-      "w": 4,
-      "h": 1
-    },
-    "82": {
-      "x": 20,
-      "y": 11,
-      "w": 4,
-      "h": 1
-    },
-    "83": {
-      "x": 0,
-      "y": 61,
+      "y": 27,
       "w": 24,
       "h": 2
     },
-    "84": {
+    "87": {
       "x": 0,
-      "y": 3,
-      "w": 12,
-      "h": 3
+      "y": 34,
+      "w": 24,
+      "h": 1
     },
-    "85": {
+    "99": {
+      "x": 16,
+      "y": 5,
+      "w": 8,
+      "h": 5
+    },
+    "100": {
+      "x": 0,
+      "y": 29,
+      "w": 8,
+      "h": 5
+    },
+    "101": {
+      "x": 8,
+      "y": 29,
+      "w": 8,
+      "h": 5
+    },
+    "102": {
+      "x": 16,
+      "y": 29,
+      "w": 8,
+      "h": 5
+    },
+    "105": {
+      "x": 0,
+      "y": 45,
+      "w": 24,
+      "h": 2
+    },
+    "106": {
+      "x": 0,
+      "y": 47,
+      "w": 12,
+      "h": 5
+    },
+    "107": {
       "x": 12,
-      "y": 3,
+      "y": 47,
       "w": 12,
+      "h": 5
+    },
+    "108": {
+      "x": 0,
+      "y": 52,
+      "w": 12,
+      "h": 5
+    },
+    "109": {
+      "x": 12,
+      "y": 52,
+      "w": 12,
+      "h": 5
+    },
+    "110": {
+      "x": 0,
+      "y": 57,
+      "w": 12,
+      "h": 5
+    },
+    "111": {
+      "x": 12,
+      "y": 57,
+      "w": 12,
+      "h": 5
+    },
+    "112": {
+      "x": 0,
+      "y": 20,
+      "w": 24,
+      "h": 1
+    },
+    "116": {
+      "x": 0,
+      "y": 10,
+      "w": 24,
+      "h": 4
+    },
+    "117": {
+      "x": 12,
+      "y": 15,
+      "w": 12,
+      "h": 5
+    },
+    "118": {
+      "x": 0,
+      "y": 14,
+      "w": 24,
+      "h": 1
+    },
+    "121": {
+      "x": 0,
+      "y": 70,
+      "w": 24,
       "h": 3
     },
-    "86": {
+    "122": {
       "x": 0,
-      "y": 63,
+      "y": 62,
+      "w": 24,
+      "h": 2
+    },
+    "123": {
+      "x": 8,
+      "y": 3,
+      "w": 8,
+      "h": 2
+    },
+    "124": {
+      "x": 16,
+      "y": 3,
+      "w": 8,
+      "h": 2
+    },
+    "125": {
+      "x": 0,
+      "y": 64,
       "w": 12,
       "h": 6
     },
-    "87": {
+    "126": {
       "x": 12,
-      "y": 63,
+      "y": 64,
       "w": 12,
       "h": 6
     }
