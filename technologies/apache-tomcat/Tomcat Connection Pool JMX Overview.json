@@ -1,0 +1,914 @@
+{
+    "version": 19,
+    "variables": [],
+    "tiles": {
+        "1": {
+            "type": "markdown",
+            "content": "## Overview of Tomcat Connection Pool JMX extension data\n\nStart here to navigate to the extension configuration and entity pages to view charts displaying data collected.\n\n-----\n#### [⚙️ Configure Extension](/ui/apps/dynatrace.extensions.manager/configurations/com.dynatrace.extension.jmx-tomcat-cp/configs)\n#### [📖 Documentation](/ui/apps/dynatrace.extensions.manager/configurations/com.dynatrace.extension.jmx-tomcat-cp/details)"
+        },
+        "2": {
+            "type": "markdown",
+            "content": "![](https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/Apache_Tomcat_logo.svg/1200px-Apache_Tomcat_logo.svg.png)"
+        },
+        "3": {
+            "type": "markdown",
+            "content": "### Currently Monitoring\n",
+            "title": ""
+        },
+        "4": {
+            "title": "Tomcat Connection Pool",
+            "type": "data",
+            "query": "fetch `dt.entity.jmx:connection_pool_tomcat`\n| summarize count()",
+            "visualization": "singleValue",
+            "visualizationSettings": {
+                "thresholds": [
+                    {
+                        "id": "0",
+                        "title": "",
+                        "field": "count()",
+                        "rules": [
+                            {
+                                "id": 3,
+                                "color": {
+                                    "Default": "var(--dt-colors-charts-categorical-color-01-default, #134fc9)"
+                                },
+                                "comparator": ">",
+                                "label": "",
+                                "value": 0
+                            }
+                        ],
+                        "isEnabled": true
+                    }
+                ],
+                "chartSettings": {
+                    "xAxisScaling": "analyzedTimeframe",
+                    "gapPolicy": "connect",
+                    "circleChartSettings": {
+                        "groupingThresholdType": "relative",
+                        "groupingThresholdValue": 0,
+                        "valueType": "relative"
+                    },
+                    "categoryOverrides": {},
+                    "hiddenLegendFields": [],
+                    "categoricalBarChartSettings": {
+                        "categoryAxis": [
+                            "count()"
+                        ],
+                        "categoryAxisLabel": "count()",
+                        "valueAxis": [
+                            "count()"
+                        ],
+                        "valueAxisLabel": "count()",
+                        "tooltipVariant": "single"
+                    },
+                    "truncationMode": "middle"
+                },
+                "singleValue": {
+                    "showLabel": false,
+                    "recordField": "count()",
+                    "autoscale": true,
+                    "sparklineSettings": {
+                        "showTicks": true,
+                        "variant": "area",
+                        "record": "host_info",
+                        "visible": false,
+                        "isVisible": false
+                    },
+                    "trend": {
+                        "relative": true,
+                        "visible": false,
+                        "isVisible": false,
+                        "trendType": "auto"
+                    },
+                    "colorThresholdTarget": "background",
+                    "label": "count()"
+                },
+                "table": {
+                    "rowDensity": "condensed",
+                    "enableSparklines": false,
+                    "hiddenColumns": [],
+                    "lineWrapIds": [],
+                    "columnWidths": {},
+                    "columnTypeOverrides": []
+                },
+                "honeycomb": {
+                    "shape": "hexagon",
+                    "legend": {
+                        "hidden": false,
+                        "position": "auto"
+                    },
+                    "colorMode": "color-palette",
+                    "colorPalette": "blue",
+                    "dataMappings": {
+                        "value": "count()"
+                    },
+                    "displayedFields": [
+                        null
+                    ]
+                },
+                "histogram": {
+                    "dataMappings": [
+                        {
+                            "valueAxis": "count()",
+                            "rangeAxis": ""
+                        }
+                    ],
+                    "variant": "single",
+                    "displayedFields": []
+                },
+                "label": {
+                    "showLabel": false,
+                    "label": "count()"
+                },
+                "icon": {
+                    "showIcon": false,
+                    "icon": ""
+                },
+                "valueBoundaries": {
+                    "min": "auto",
+                    "max": "auto"
+                },
+                "unitsOverrides": [
+                    {
+                        "identifier": "host_info.single_value",
+                        "unitCategory": "unspecified",
+                        "baseUnit": "count",
+                        "displayUnit": "",
+                        "decimals": 0,
+                        "suffix": "",
+                        "delimiter": false,
+                        "added": 0,
+                        "id": "host_info.single_value"
+                    }
+                ],
+                "dataMapping": {
+                    "value": "count()"
+                }
+            },
+            "querySettings": {
+                "maxResultRecords": 1000,
+                "defaultScanLimitGbytes": 500,
+                "maxResultMegaBytes": 1,
+                "defaultSamplingRatio": 10,
+                "enableSampling": false
+            },
+            "davis": {
+                "enabled": false,
+                "davisVisualization": {
+                    "isAvailable": true
+                }
+            }
+        },
+        "5": {
+            "type": "markdown",
+            "content": "#### 🔗 Navigate to entities:\n* [Tomcat Connection Pool](/ui/apps/dynatrace.classic.technologies/ui/entity/list/jmx:connection_pool_tomcat)"
+        },
+        "6": {
+            "type": "markdown",
+            "content": "\n"
+        },
+        "7": {
+            "type": "markdown",
+            "content": "## Metric Summary 📈\n"
+        },
+        "8": {
+            "type": "markdown",
+            "content": "### Connection pools\n"
+        },
+        "9": {
+            "title": "Tomcat connection pools",
+            "type": "data",
+            "query": "timeseries {\n  metric1=avg(`tomcat.connectionPool.activeConnections`),\n  metric2=avg(`tomcat.connectionPool.createdConnections`)\n},\nby: {`dt.entity.jmx:connection_pool_tomcat`}\n| fieldsAdd entity_name = entityName(`dt.entity.jmx:connection_pool_tomcat`)\n| fieldsAdd entity_id = `dt.entity.jmx:connection_pool_tomcat`\n| fieldsAdd entity_url = concat(\"/ui/apps/dynatrace.classic.technologies/ui/entity/\", entity_id)\n| fieldsAdd `Tomcat connection pool` = concat(\"[\", entity_name, \"]\", \"(\", entity_url, \")\")\n| fieldsAdd `Active connections` = arrayAvg(metric1)\n| fieldsAdd `Created connections` = arrayAvg(metric2)\n| fields `Tomcat connection pool`, `Active connections`, `Created connections`\n| limit 20",
+            "visualization": "table",
+            "visualizationSettings": {
+                "thresholds": [],
+                "autoSelectVisualization": false,
+                "chartSettings": {
+                    "gapPolicy": "gap",
+                    "circleChartSettings": {
+                        "groupingThresholdType": "relative",
+                        "groupingThresholdValue": 0,
+                        "valueType": "relative"
+                    },
+                    "categoryOverrides": {},
+                    "curve": "linear",
+                    "pointsDisplay": "auto",
+                    "categoricalBarChartSettings": {
+                        "layout": "horizontal",
+                        "categoryAxisTickLayout": "horizontal",
+                        "scale": "absolute",
+                        "groupMode": "stacked",
+                        "colorPaletteMode": "multi-color",
+                        "valueAxisScale": "linear"
+                    },
+                    "colorPalette": "categorical",
+                    "valueRepresentation": "absolute",
+                    "truncationMode": "middle"
+                },
+                "singleValue": {
+                    "showLabel": true,
+                    "label": "",
+                    "prefixIcon": "AnalyticsIcon",
+                    "isIconVisible": false,
+                    "autoscale": true,
+                    "alignment": "center",
+                    "colorThresholdTarget": "value"
+                },
+                "table": {
+                    "rowDensity": "condensed",
+                    "enableSparklines": false,
+                    "hiddenColumns": [],
+                    "linewrapEnabled": false,
+                    "lineWrapIds": [],
+                    "monospacedFontEnabled": false,
+                    "monospacedFontColumns": [],
+                    "columnWidths": {},
+                    "columnTypeOverrides": [
+                        {
+                            "id": 913702.4000000004,
+                            "fields": [
+                                "Tomcat connection pool"
+                            ],
+                            "value": "markdown"
+                        }
+                    ],
+                    "columnOrder": [
+                        "[\"Tomcat connection pool\"]",
+                        "[\"Active connections\"]",
+                        "[\"Created connections\"]"
+                    ]
+                },
+                "honeycomb": {
+                    "shape": "hexagon",
+                    "legend": {
+                        "hidden": false,
+                        "position": "auto",
+                        "ratio": "auto"
+                    },
+                    "dataMappings": {},
+                    "displayedFields": [],
+                    "truncationMode": "middle",
+                    "colorMode": "color-palette",
+                    "colorPalette": "categorical"
+                },
+                "histogram": {
+                    "legend": {
+                        "position": "auto"
+                    },
+                    "yAxis": {
+                        "label": "Frequency",
+                        "isLabelVisible": true,
+                        "scale": "linear"
+                    },
+                    "colorPalette": "categorical",
+                    "dataMappings": [],
+                    "variant": "single",
+                    "truncationMode": "middle"
+                },
+                "valueBoundaries": {
+                    "min": "auto",
+                    "max": "auto"
+                }
+            },
+            "querySettings": {
+                "maxResultRecords": 1000,
+                "defaultScanLimitGbytes": 500,
+                "maxResultMegaBytes": 1,
+                "defaultSamplingRatio": 10,
+                "enableSampling": false
+            },
+            "davis": {
+                "enabled": false,
+                "davisVisualization": {
+                    "isAvailable": true
+                }
+            }
+        },
+        "10": {
+            "title": "Active connections",
+            "type": "data",
+            "query": "timeseries average = avg(`tomcat.connectionPool.activeConnections`), by: {`dt.entity.jmx:connection_pool_tomcat`}\n| sort arrayAvg(average) desc\n| fieldsAdd name=entityName(`dt.entity.jmx:connection_pool_tomcat`)\n| fieldsRemove `dt.entity.jmx:connection_pool_tomcat`\n| limit 20\n\n",
+            "visualization": "lineChart",
+            "visualizationSettings": {
+                "thresholds": [],
+                "chartSettings": {
+                    "gapPolicy": "connect",
+                    "circleChartSettings": {
+                        "groupingThresholdType": "relative",
+                        "groupingThresholdValue": 0,
+                        "valueType": "relative"
+                    },
+                    "curve": "linear",
+                    "pointsDisplay": "never",
+                    "categoricalBarChartSettings": {
+                        "layout": "horizontal",
+                        "categoryAxisTickLayout": "horizontal",
+                        "scale": "absolute",
+                        "groupMode": "stacked",
+                        "colorPaletteMode": "multi-color",
+                        "valueAxisScale": "linear"
+                    },
+                    "colorPalette": "categorical",
+                    "valueRepresentation": "absolute",
+                    "truncationMode": "middle",
+                    "xAxisScaling": "analyzedTimeframe",
+                    "xAxisLabel": "timeframe",
+                    "xAxisIsLabelVisible": false,
+                    "hiddenLegendFields": [
+                        "interval",
+                        "average"
+                    ],
+                    "fieldMapping": {
+                        "timestamp": "timeframe",
+                        "leftAxisValues": [
+                            "average"
+                        ]
+                    },
+                    "leftYAxisSettings": {
+                        "label": "Bytes sent",
+                        "isLabelVisible": false
+                    }
+                },
+                "singleValue": {
+                    "showLabel": true,
+                    "label": "",
+                    "prefixIcon": "AnalyticsIcon",
+                    "isIconVisible": false,
+                    "autoscale": true,
+                    "alignment": "center",
+                    "colorThresholdTarget": "value"
+                },
+                "table": {
+                    "rowDensity": "condensed",
+                    "enableSparklines": false,
+                    "hiddenColumns": [],
+                    "linewrapEnabled": false,
+                    "lineWrapIds": [],
+                    "monospacedFontEnabled": false,
+                    "monospacedFontColumns": [],
+                    "columnTypeOverrides": [
+                        {
+                            "fields": [
+                                "average"
+                            ],
+                            "value": "sparkline",
+                            "id": 1746072737696
+                        }
+                    ]
+                },
+                "honeycomb": {
+                    "shape": "hexagon",
+                    "legend": {
+                        "hidden": false,
+                        "position": "auto",
+                        "ratio": "auto"
+                    },
+                    "displayedFields": [],
+                    "truncationMode": "middle",
+                    "colorMode": "color-palette",
+                    "colorPalette": "categorical"
+                },
+                "histogram": {
+                    "legend": {
+                        "position": "auto"
+                    },
+                    "yAxis": {
+                        "label": "Frequency",
+                        "isLabelVisible": true,
+                        "scale": "linear"
+                    },
+                    "colorPalette": "categorical",
+                    "dataMappings": [],
+                    "variant": "single",
+                    "truncationMode": "middle"
+                },
+                "valueBoundaries": {
+                    "min": "auto",
+                    "max": "auto"
+                },
+                "autoSelectVisualization": true
+            },
+            "querySettings": {
+                "maxResultRecords": 1000,
+                "defaultScanLimitGbytes": 500,
+                "maxResultMegaBytes": 1,
+                "defaultSamplingRatio": 10,
+                "enableSampling": false
+            },
+            "davis": {
+                "enabled": false,
+                "davisVisualization": {
+                    "isAvailable": true
+                }
+            }
+        },
+        "11": {
+            "title": "Created connections",
+            "type": "data",
+            "query": "timeseries average = avg(`tomcat.connectionPool.createdConnections`), by: {`dt.entity.jmx:connection_pool_tomcat`}\n| sort arrayAvg(average) desc\n| fieldsAdd name=entityName(`dt.entity.jmx:connection_pool_tomcat`)\n| fieldsRemove `dt.entity.jmx:connection_pool_tomcat`\n| limit 20\n\n",
+            "visualization": "lineChart",
+            "visualizationSettings": {
+                "thresholds": [],
+                "chartSettings": {
+                    "gapPolicy": "connect",
+                    "circleChartSettings": {
+                        "groupingThresholdType": "relative",
+                        "groupingThresholdValue": 0,
+                        "valueType": "relative"
+                    },
+                    "curve": "linear",
+                    "pointsDisplay": "never",
+                    "categoricalBarChartSettings": {
+                        "layout": "horizontal",
+                        "categoryAxisTickLayout": "horizontal",
+                        "scale": "absolute",
+                        "groupMode": "stacked",
+                        "colorPaletteMode": "multi-color",
+                        "valueAxisScale": "linear"
+                    },
+                    "colorPalette": "categorical",
+                    "valueRepresentation": "absolute",
+                    "truncationMode": "middle",
+                    "xAxisScaling": "analyzedTimeframe",
+                    "xAxisLabel": "timeframe",
+                    "xAxisIsLabelVisible": false,
+                    "hiddenLegendFields": [
+                        "interval",
+                        "average"
+                    ],
+                    "fieldMapping": {
+                        "timestamp": "timeframe",
+                        "leftAxisValues": [
+                            "average"
+                        ]
+                    },
+                    "leftYAxisSettings": {
+                        "label": "Bytes sent",
+                        "isLabelVisible": false
+                    }
+                },
+                "singleValue": {
+                    "showLabel": true,
+                    "label": "",
+                    "prefixIcon": "AnalyticsIcon",
+                    "isIconVisible": false,
+                    "autoscale": true,
+                    "alignment": "center",
+                    "colorThresholdTarget": "value"
+                },
+                "table": {
+                    "rowDensity": "condensed",
+                    "enableSparklines": false,
+                    "hiddenColumns": [],
+                    "linewrapEnabled": false,
+                    "lineWrapIds": [],
+                    "monospacedFontEnabled": false,
+                    "monospacedFontColumns": [],
+                    "columnTypeOverrides": [
+                        {
+                            "fields": [
+                                "average"
+                            ],
+                            "value": "sparkline",
+                            "id": 1746072737696
+                        }
+                    ]
+                },
+                "honeycomb": {
+                    "shape": "hexagon",
+                    "legend": {
+                        "hidden": false,
+                        "position": "auto",
+                        "ratio": "auto"
+                    },
+                    "displayedFields": [],
+                    "truncationMode": "middle",
+                    "colorMode": "color-palette",
+                    "colorPalette": "categorical"
+                },
+                "histogram": {
+                    "legend": {
+                        "position": "auto"
+                    },
+                    "yAxis": {
+                        "label": "Frequency",
+                        "isLabelVisible": true,
+                        "scale": "linear"
+                    },
+                    "colorPalette": "categorical",
+                    "dataMappings": [],
+                    "variant": "single",
+                    "truncationMode": "middle"
+                },
+                "valueBoundaries": {
+                    "min": "auto",
+                    "max": "auto"
+                },
+                "autoSelectVisualization": true
+            },
+            "querySettings": {
+                "maxResultRecords": 1000,
+                "defaultScanLimitGbytes": 500,
+                "maxResultMegaBytes": 1,
+                "defaultSamplingRatio": 10,
+                "enableSampling": false
+            },
+            "davis": {
+                "enabled": false,
+                "davisVisualization": {
+                    "isAvailable": true
+                }
+            }
+        },
+        "12": {
+            "type": "markdown",
+            "content": "\n"
+        },
+        "13": {
+            "type": "markdown",
+            "content": "### Thread pools"
+        },
+        "14": {
+            "title": "Thread pool utilization",
+            "type": "data",
+            "query": "timeseries {\nbusy = avg(`tomcat.threadPool.currentThreadsBusy`),\nmax = avg(`tomcat.threadPool.maxThreads`)\n},\nby: {`name`, `dt.entity.process_group_instance`, dt.entity.host}\n| fieldsAdd pgi_name = entityName(dt.entity.process_group_instance), host_name = entityName(dt.entity.host)\n| fieldsRemove dt.entity.host, dt.entity.process_group_instance\n| fieldsAdd util = 100 * busy[] / max[]\n| fieldsRemove busy, max\n| fields host_name, pgi_name, name, interval, timeframe, util\n| limit 20\n\n",
+            "visualization": "lineChart",
+            "visualizationSettings": {
+                "autoSelectVisualization": false,
+                "thresholds": [],
+                "chartSettings": {
+                    "gapPolicy": "connect",
+                    "circleChartSettings": {
+                        "groupingThresholdType": "relative",
+                        "groupingThresholdValue": 0,
+                        "valueType": "relative"
+                    },
+                    "curve": "linear",
+                    "pointsDisplay": "never",
+                    "categoricalBarChartSettings": {
+                        "layout": "horizontal",
+                        "categoryAxisTickLayout": "horizontal",
+                        "scale": "absolute",
+                        "groupMode": "stacked",
+                        "colorPaletteMode": "multi-color",
+                        "valueAxisScale": "linear"
+                    },
+                    "colorPalette": "categorical",
+                    "valueRepresentation": "absolute",
+                    "truncationMode": "middle",
+                    "xAxisScaling": "analyzedTimeframe",
+                    "xAxisLabel": "timeframe",
+                    "xAxisIsLabelVisible": false,
+                    "hiddenLegendFields": [
+                        "interval",
+                        "average"
+                    ],
+                    "fieldMapping": {
+                        "timestamp": "timeframe",
+                        "leftAxisValues": [
+                            "util"
+                        ]
+                    },
+                    "leftYAxisSettings": {
+                        "label": "Bytes sent",
+                        "isLabelVisible": false
+                    },
+                    "legend": {
+                        "hidden": false
+                    }
+                },
+                "singleValue": {
+                    "showLabel": true,
+                    "label": "",
+                    "prefixIcon": "AnalyticsIcon",
+                    "isIconVisible": false,
+                    "autoscale": true,
+                    "alignment": "center",
+                    "colorThresholdTarget": "value"
+                },
+                "table": {
+                    "rowDensity": "condensed",
+                    "enableSparklines": false,
+                    "hiddenColumns": [],
+                    "linewrapEnabled": false,
+                    "lineWrapIds": [],
+                    "monospacedFontEnabled": false,
+                    "monospacedFontColumns": [],
+                    "columnTypeOverrides": [
+                        {
+                            "fields": [
+                                "util"
+                            ],
+                            "value": "sparkline",
+                            "id": 1753865420369
+                        }
+                    ]
+                },
+                "honeycomb": {
+                    "shape": "hexagon",
+                    "legend": {
+                        "hidden": false,
+                        "position": "auto",
+                        "ratio": "auto"
+                    },
+                    "displayedFields": [],
+                    "truncationMode": "middle",
+                    "colorMode": "color-palette",
+                    "colorPalette": "categorical"
+                },
+                "histogram": {
+                    "legend": {
+                        "position": "auto"
+                    },
+                    "yAxis": {
+                        "label": "Frequency",
+                        "isLabelVisible": true,
+                        "scale": "linear"
+                    },
+                    "colorPalette": "categorical",
+                    "dataMappings": [],
+                    "variant": "single",
+                    "truncationMode": "middle"
+                },
+                "valueBoundaries": {
+                    "min": "auto",
+                    "max": "auto"
+                },
+                "unitsOverrides": [
+                    {
+                        "identifier": "util",
+                        "unitCategory": "percentage",
+                        "baseUnit": "percent",
+                        "displayUnit": null,
+                        "decimals": 2,
+                        "suffix": "",
+                        "delimiter": false,
+                        "added": 1753865456852
+                    }
+                ]
+            },
+            "querySettings": {
+                "maxResultRecords": 1000,
+                "defaultScanLimitGbytes": 500,
+                "maxResultMegaBytes": 1,
+                "defaultSamplingRatio": 10,
+                "enableSampling": false
+            },
+            "davis": {
+                "enabled": false,
+                "davisVisualization": {
+                    "isAvailable": true
+                }
+            }
+        },
+        "15": {
+            "title": "Web requests",
+            "type": "data",
+            "query": "timeseries {\n  metric1=avg(`tomcat.processingTime.count`),\n  metric2=avg(`tomcat.requestCount.count`),\n  metric3=avg(`tomcat.errorCount.count`)\n},\nby: {dt.entity.host, dt.entity.process_group_instance, name}\n| fieldsAdd host_name = entityName(`dt.entity.host`)\n| fieldsAdd host_id = `dt.entity.host`\n| fieldsAdd host_url = concat(\"/ui/apps/dynatrace.classic.technologies/ui/entity/\", host_id)\n| fieldsAdd `Host` = concat(\"[\", host_name, \"]\", \"(\", host_url, \")\")\n| fieldsAdd pgi_name = entityName(`dt.entity.process_group_instance`)\n| fieldsAdd pgi_id = `dt.entity.process_group_instance`\n| fieldsAdd pgi_url = concat(\"/ui/apps/dynatrace.classic.technologies/ui/entity/\", pgi_id)\n| fieldsAdd `Process` = concat(\"[\", pgi_name, \"]\", \"(\", pgi_url, \")\")\n| fieldsAdd `Processing time / req` = arraySum(metric1) / arraySum(metric2)\n| fieldsAdd `Error count` = arraySum(metric3)\n| fields `Host`, `Process`, `Name` = name, `Processing time / req`, `Error count`\n| limit 20",
+            "visualization": "table",
+            "visualizationSettings": {
+                "thresholds": [],
+                "autoSelectVisualization": false,
+                "chartSettings": {
+                    "gapPolicy": "gap",
+                    "circleChartSettings": {
+                        "groupingThresholdType": "relative",
+                        "groupingThresholdValue": 0,
+                        "valueType": "relative"
+                    },
+                    "categoryOverrides": {},
+                    "curve": "linear",
+                    "pointsDisplay": "auto",
+                    "categoricalBarChartSettings": {
+                        "layout": "horizontal",
+                        "categoryAxisTickLayout": "horizontal",
+                        "scale": "absolute",
+                        "groupMode": "stacked",
+                        "colorPaletteMode": "multi-color",
+                        "valueAxisScale": "linear"
+                    },
+                    "colorPalette": "categorical",
+                    "valueRepresentation": "absolute",
+                    "truncationMode": "middle"
+                },
+                "singleValue": {
+                    "showLabel": true,
+                    "label": "",
+                    "prefixIcon": "AnalyticsIcon",
+                    "isIconVisible": false,
+                    "autoscale": true,
+                    "alignment": "center",
+                    "colorThresholdTarget": "value"
+                },
+                "table": {
+                    "rowDensity": "condensed",
+                    "enableSparklines": false,
+                    "hiddenColumns": [],
+                    "linewrapEnabled": false,
+                    "lineWrapIds": [],
+                    "monospacedFontEnabled": false,
+                    "monospacedFontColumns": [],
+                    "columnWidths": {},
+                    "columnTypeOverrides": [
+                        {
+                            "id": 913702.4000000004,
+                            "fields": [
+                                "Host"
+                            ],
+                            "value": "markdown"
+                        },
+                        {
+                            "id": 1444768,
+                            "fields": [
+                                "Process"
+                            ],
+                            "value": "markdown"
+                        }
+                    ],
+                    "columnOrder": [
+                        "[\"Host\"]",
+                        "[\"Process\"]",
+                        "[\"Name\"]",
+                        "[\"Processing time / req\"]",
+                        "[\"Error count\"]"
+                    ]
+                },
+                "honeycomb": {
+                    "shape": "hexagon",
+                    "legend": {
+                        "hidden": false,
+                        "position": "auto",
+                        "ratio": "auto"
+                    },
+                    "dataMappings": {},
+                    "displayedFields": [],
+                    "truncationMode": "middle",
+                    "colorMode": "color-palette",
+                    "colorPalette": "categorical"
+                },
+                "histogram": {
+                    "legend": {
+                        "position": "auto"
+                    },
+                    "yAxis": {
+                        "label": "Frequency",
+                        "isLabelVisible": true,
+                        "scale": "linear"
+                    },
+                    "colorPalette": "categorical",
+                    "dataMappings": [],
+                    "variant": "single",
+                    "truncationMode": "middle"
+                },
+                "valueBoundaries": {
+                    "min": "auto",
+                    "max": "auto"
+                },
+                "unitsOverrides": [
+                    {
+                        "identifier": "Processing time / req",
+                        "unitCategory": "time",
+                        "baseUnit": "millisecond",
+                        "displayUnit": null,
+                        "decimals": 2,
+                        "suffix": "",
+                        "delimiter": false,
+                        "added": 1753865884411
+                    },
+                    {
+                        "identifier": "Error count",
+                        "unitCategory": "unspecified",
+                        "baseUnit": "none",
+                        "displayUnit": null,
+                        "decimals": 0,
+                        "suffix": "",
+                        "delimiter": false,
+                        "added": 1753866054159
+                    }
+                ]
+            },
+            "querySettings": {
+                "maxResultRecords": 1000,
+                "defaultScanLimitGbytes": 500,
+                "maxResultMegaBytes": 1,
+                "defaultSamplingRatio": 10,
+                "enableSampling": false
+            },
+            "davis": {
+                "enabled": false,
+                "davisVisualization": {
+                    "isAvailable": true
+                }
+            }
+        },
+        "16": {
+            "type": "markdown",
+            "content": "### Web requests\n"
+        }
+    },
+    "layouts": {
+        "1": {
+            "x": 3,
+            "y": 0,
+            "w": 37,
+            "h": 4
+        },
+        "2": {
+            "x": 0,
+            "y": 0,
+            "w": 3,
+            "h": 4
+        },
+        "3": {
+            "x": 0,
+            "y": 4,
+            "w": 40,
+            "h": 1
+        },
+        "4": {
+            "x": 0,
+            "y": 5,
+            "w": 6,
+            "h": 3
+        },
+        "5": {
+            "x": 6,
+            "y": 5,
+            "w": 34,
+            "h": 3
+        },
+        "6": {
+            "x": 0,
+            "y": 8,
+            "w": 40,
+            "h": 1
+        },
+        "7": {
+            "x": 0,
+            "y": 9,
+            "w": 40,
+            "h": 1
+        },
+        "8": {
+            "x": 0,
+            "y": 10,
+            "w": 40,
+            "h": 1
+        },
+        "9": {
+            "x": 0,
+            "y": 11,
+            "w": 14,
+            "h": 5
+        },
+        "10": {
+            "x": 14,
+            "y": 11,
+            "w": 12,
+            "h": 5
+        },
+        "11": {
+            "x": 26,
+            "y": 11,
+            "w": 12,
+            "h": 5
+        },
+        "12": {
+            "x": 0,
+            "y": 16,
+            "w": 40,
+            "h": 1
+        },
+        "13": {
+            "x": 0,
+            "y": 17,
+            "w": 17,
+            "h": 1
+        },
+        "14": {
+            "x": 0,
+            "y": 18,
+            "w": 17,
+            "h": 5
+        },
+        "15": {
+            "x": 18,
+            "y": 18,
+            "w": 20,
+            "h": 5
+        },
+        "16": {
+            "x": 18,
+            "y": 17,
+            "w": 17,
+            "h": 1
+        }
+    },
+    "importedWithCode": false,
+    "settings": {
+        "gridLayout": {
+            "mode": "responsive",
+            "columnsCount": 40
+        }
+    }
+}
