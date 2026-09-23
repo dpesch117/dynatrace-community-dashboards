@@ -12,9 +12,9 @@ Each technology gets its own folder containing:
 
 | Technology | Dashboard | OpenPipeline |
 |---|---|---|
-| [AWS EC2](technologies/aws-ec2) | ✅ | ✅ |
-| [Amazon SQS](technologies/amazon-sqs) | ✅ | ✅ |
-| [Apache Tomcat](technologies/apache-tomcat) | ✅ | ✅ |
+| [AWS EC2](technologies/aws-ec2) | ✅ |  |
+| [Amazon SQS](technologies/amazon-sqs) | ✅ |  |
+| [Apache Tomcat](technologies/apache-tomcat) | ✅ |  |
 
 ## How it works
 
